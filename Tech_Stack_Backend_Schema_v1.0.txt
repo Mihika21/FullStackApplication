@@ -1,0 +1,1055 @@
+HGV
+GCC Workforce Master Data & Billing Platform
+Technical Stack & Backend Schema
+Version 1.0 | March 2026 | Engineering Build Reference
+This document defines the recommended implementation stack, backend architecture, PostgreSQL schema, API boundaries, billing persistence model, security controls, import/reporting design, and engineering conventions for the HGV GCC Workforce Master Data & Billing Platform.
+Decision
+Recommendation
+Frontend
+Next.js 14 + React 18 + TypeScript 5 + Tailwind/shadcn/ui.
+Backend
+ASP.NET Core / .NET 8 Web API, modular monolith.
+Database
+PostgreSQL 16 + EF Core 8 + Npgsql.
+Auth
+ASP.NET Core Identity with secure HTTP-only authentication; future OIDC/SSO abstraction.
+RBAC
+HR Manager, HR Team Member, GCC Lead; enforced server-side.
+Imports
+CsvHelper + PostgreSQL staging tables + partial-success processing.
+Reports
+Open XML SDK for Excel + Microsoft Playwright for PDF.
+Jobs
+ASP.NET Core BackgroundService + PostgreSQL-backed job table; no Redis required for Phase 1.
+API
+REST JSON + OpenAPI/Swagger.
+Observability
+Serilog structured logging + centralized monitoring.
+Deployment
+Docker/containerized deployment; hosting remains an organizational decision.
+
+1. Scope & Source of Truth
+The HGV BRD/PRD remains the business source of truth. The attached AI Procurement Tech Stack document is used only for structure and build-document depth; procurement-specific AI, vendor, RFP, contract, and approval technologies are not carried into this product. fileciteturn5file1L5-L8
+Requirement
+Technical response
+2,000+ employees
+Indexed PostgreSQL relational model.
+3 roles
+API authorization policies and role claims.
+Dynamic mandatory fields
+Domain validation based on Engagement Type.
+Configurable billing
+Effective-dated configuration versions.
+Joining Bonus
+1/3 in each of first 3 applicable billing months.
+Variable Pay
+None / Flat % / Custom Amount; Flat % uses monthly fixed salary.
+Shift allowance
+PMO monthly override by Employee ID + Billing Month.
+CSV
+Template, validation, partial success, row-level errors.
+Reports
+Master Data, Billing Summary, Headcount; Excel/PDF.
+Historical attrition
+Inactive records retained; no destructive deletion.
+Sensitive PII
+Restricted DTOs, masking, encrypted infrastructure storage, audit.
+Future HRMS
+Stable UUIDs, external reference fields, modular API.
+
+2. Technology Stack
+2.1 Frontend
+Technology
+Version
+Purpose
+Next.js
+14.2.29
+App Router, SSR, routing
+React
+18.3.1
+UI runtime
+TypeScript
+5.8.3
+Strict typing
+Tailwind CSS
+3.4.17
+Styling
+shadcn/ui
+source components
+Accessible enterprise components
+TanStack Query
+5.75.5
+Server-state fetching/cache/mutations
+Zustand
+5.0.5
+UI-only client state
+React Hook Form
+7.56.4
+Complex forms
+Zod
+3.24.4
+Form/API validation
+TanStack Table
+8.21.3
+Data tables
+date-fns
+4.1.0
+Date handling
+lucide-react
+0.511.0
+Icons
+
+2.2 Backend
+Technology
+Version
+Purpose
+ASP.NET Core / .NET
+8.0 LTS
+REST API, DI, auth, authorization
+Entity Framework Core
+8.x
+ORM, migrations, transactions
+Npgsql EF Core provider
+8.x
+PostgreSQL access
+FluentValidation
+11.x
+Complex request/domain validation
+CsvHelper
+33.x
+Streaming CSV parsing
+Open XML SDK
+3.x
+XLSX generation
+Microsoft Playwright
+1.52.x
+Server-side PDF rendering
+Serilog.AspNetCore
+8.x
+Structured logging
+Swashbuckle.AspNetCore
+6.x
+OpenAPI/Swagger
+
+2.3 Infrastructure
+Component
+Recommendation
+Database
+PostgreSQL 16.x
+Object storage
+S3-compatible or Azure Blob Storage
+Containers
+Docker
+Secrets
+Cloud/enterprise secret manager
+Monitoring
+OpenTelemetry-compatible monitoring platform
+CI/CD
+GitHub Actions or enterprise equivalent
+Ingress
+Managed ingress/Nginx with TLS
+
+Exact package patch versions should be locked in the build manifest at implementation kickoff and security-reviewed; the versions above use the March 2026 sample baseline where applicable.
+3. Architecture
+Layer
+Components
+Web
+Next.js pages, forms, tables, dashboard, upload/report UI.
+API
+ASP.NET Core endpoints, auth, authorization, DTO mapping.
+Application
+Use cases, validators, transactions, orchestration.
+Domain
+Workforce, compensation, billing, reference-data rules.
+Persistence
+EF Core DbContext, PostgreSQL migrations, projections.
+File processing
+Upload validation, staging, import, error-file generation.
+Reporting
+Shared query service → Excel/PDF renderers.
+Jobs
+PostgreSQL-backed BackgroundService.
+Audit
+Append-only event recording.
+Observability
+Structured logs, metrics, traces, correlation IDs.
+
+Use a modular monolith in Phase 1; split services only if scale or organizational needs justify it.
+Billing is deterministic and configuration-driven; commercial values are never hard-coded.
+Calculated totals are not user-editable.
+API authorization is mandatory even when UI controls are hidden.
+Persist configuration version and calculation version so historical billing can be reproduced.
+Use DTOs rather than exposing EF entities directly.
+Use database constraints for uniqueness, referential integrity and numeric validity.
+4. Backend Project Structure
+Path
+Purpose
+backend/src/Hgv.Api/
+API host, middleware, controllers/endpoints
+backend/src/Hgv.Application/
+Use cases, DTOs, validators, interfaces
+backend/src/Hgv.Domain/
+Entities, enums, value objects, billing rules
+backend/src/Hgv.Infrastructure/
+EF Core, storage, exports, logging
+backend/tests/
+Unit, integration and API tests
+frontend/src/app/
+Next.js routes
+frontend/src/components/
+UI and feature components
+frontend/src/lib/api/
+Typed API client
+frontend/src/lib/schemas/
+Zod schemas
+frontend/src/stores/
+Zustand UI state
+db/migrations/
+EF Core migration history
+
+5. Backend Modules
+Module
+Responsibilities
+Workforce
+Employee lifecycle, master data, status, historical records
+Reference Data
+Domain Lead, Source, Shift Type, controlled values
+Compensation
+Fixed CTC, variable pay, joining bonus, effective dates
+Billing
+Applicability, configuration version, monthly calculation
+Shift Allowance
+PMO monthly validated values and fallback rate
+Bulk Import
+Staging, validation, row errors, partial success
+Reporting
+Master Data, Billing Summary, Headcount
+Identity & Access
+Users, roles, password lifecycle
+Audit
+Consequential change history
+Notifications
+In-app operational notifications
+
+6. PostgreSQL Schema Overview
+Table
+Purpose
+Key
+app_user
+Application user profile
+uuid
+role
+Role catalogue
+uuid
+employee
+Core workforce record
+uuid
+domain_lead
+Controlled reference
+uuid
+source
+Controlled reference
+uuid
+shift_type
+Configurable shift reference
+uuid
+employee_compensation
+Effective-dated compensation
+uuid
+employee_contact
+Contact information
+uuid
+employee_address
+Address information
+uuid
+employee_attrition
+Lifecycle/attrition history
+uuid
+employee_document
+Compliance/document metadata
+uuid
+billing_configuration
+Effective-dated commercial config
+uuid
+shift_allowance_rate
+Shift default rate by config
+uuid
+shift_allowance_override
+PMO monthly value
+uuid
+billing_result
+Monthly billing snapshot
+uuid
+billing_result_component
+Detailed billing components
+uuid
+import_batch
+Upload execution
+uuid
+import_row_error
+Row-level errors
+uuid
+report_job
+Report generation job
+uuid
+audit_event
+Audit history
+uuid
+notification
+In-app notification
+uuid
+
+7. Core Schema
+7.1 Users & roles
+Table/column
+Type
+Rule
+role.id
+uuid
+PK
+role.code
+varchar(50)
+HR_MANAGER / HR_TEAM_MEMBER / GCC_LEAD
+role.name
+varchar(100)
+Required
+app_user.id
+uuid
+PK
+app_user.email
+citext
+Unique, required
+app_user.display_name
+varchar(200)
+Required
+app_user.role_id
+uuid
+FK role
+app_user.status
+varchar(30)
+ACTIVE / INACTIVE
+app_user.last_login_at
+timestamptz
+Nullable
+app_user.created_at / updated_at
+timestamptz
+Required
+
+7.2 employee
+Column
+Type
+Rule
+id
+uuid PK
+Stable internal ID
+employee_id
+varchar(50)
+Unique when present
+employee_name
+varchar(200)
+Required
+oracle_person_number
+varchar(80)
+Nullable external reference
+assignment_status
+varchar(50)
+Required
+gender
+varchar(50)
+Required
+engagement_type
+varchar(30)
+GCC/NOC/REB​ADGE/COLOCATION/NON_GCC
+employment_category
+varchar(40)
+Required for GCC/NOC/Non-GCC
+gcc_presence
+boolean
+Required
+hgv_role
+varchar(200)
+Required
+hgv_department
+varchar(200)
+Required for GCC/NOC/Rebadge/Colocation
+domain_lead_id
+uuid
+Required FK
+reporting_manager
+varchar(200)
+Nullable
+business_unit / practice / sub_practice
+varchar
+Nullable
+grade_level / employee_group
+varchar
+Nullable
+project
+varchar(200)
+Required for Non-GCC
+source_id
+uuid
+Required FK
+sub_source
+varchar(150)
+Nullable
+date_of_joining
+date
+Nullable
+hgv_start_date
+date
+Required for GCC/NOC/Rebadge/Colocation
+hgv_end_date
+date
+Nullable
+shift_type_id
+uuid
+Required for GCC/NOC/Rebadge/Colocation
+created_at / updated_at
+timestamptz
+Required
+created_by / updated_by
+uuid
+FK app_user
+
+Application-level conditional validation enforces the engagement-specific mandatory matrix; database checks and foreign keys provide the integrity backstop.
+7.3 Reference tables
+Table
+Columns
+domain_lead
+id, name, active, created_at, updated_at
+source
+id, name, active, created_at, updated_at
+shift_type
+id, code, name, active, default_rate_config_key
+lookup_value
+id, lookup_type, code, label, active, sort_order
+
+7.4 employee_compensation
+Column
+Type
+Rule
+id
+uuid PK
+Internal key
+employee_id
+uuid FK
+Required
+effective_from / effective_to
+date
+Effective-dated record
+fixed_ctc_inr_annual
+numeric(18,2)
+GCC/NOC required
+variable_pay_mode
+varchar(30)
+NONE / FLAT_PERCENT / CUSTOM_AMOUNT
+variable_pay_percent
+numeric(9,6)
+Required for FLAT_PERCENT
+variable_pay_custom_inr_monthly
+numeric(18,2)
+Required for CUSTOM_AMOUNT
+joining_bonus_inr
+numeric(18,2)
+GCC/NOC where applicable
+created_at / updated_at
+timestamptz
+Required
+created_by / updated_by
+uuid
+FK app_user
+
+7.5 PII/supporting tables
+Table
+Recommended fields
+Protection
+employee_contact
+personal_email, HGV email, mobile, emergency contact, guardian, spouse, qualification
+Restricted DTOs; masking
+employee_address
+permanent/current address, base location
+Restricted DTOs/reports
+employee_attrition
+employee_id, attrition_reason, attrition_date, notes
+Historical; no hard delete
+employee_document
+employee_id, document_type, status, reference, expiry
+Metadata only where possible; restricted access
+
+8. Billing Configuration Schema
+Table/column
+Type
+Rule
+billing_configuration.id
+uuid
+PK
+version_number
+integer
+Sequential
+effective_from / effective_to
+date
+Config period
+fx_rate_inr_usd
+numeric(18,8)
+Positive
+variable_pay_rate_percent
+numeric(9,6)
+0–100
+operational_margin_percent
+numeric(9,6)
+0–100
+facility_cost_usd_monthly
+numeric(18,2)
+Non-negative
+user_bundle_cost_usd_monthly
+numeric(18,2)
+Non-negative
+created_by / created_at
+uuid/timestamptz
+HR Manager audit
+approved_by / approved_at
+uuid/timestamptz
+Optional governance
+
+shift_allowance_rate column
+Type
+Rule
+id
+uuid
+PK
+billing_configuration_id
+uuid
+FK
+shift_type_id
+uuid
+FK
+rate_usd_monthly
+numeric(18,2)
+Non-negative
+
+Production commercial values are intentionally not included in this document. They must be entered through protected Billing Configuration.
+9. Shift Allowance Override
+Column
+Type
+Rule
+id
+uuid PK
+Internal key
+employee_id
+uuid FK
+Required
+billing_month
+date
+First day of month
+validated_amount_usd
+numeric(18,2)
+Non-negative
+validation_status
+varchar(30)
+VALIDATED / REJECTED
+source_batch_id
+uuid
+Optional import batch
+validated_by / validated_at
+uuid/timestamptz
+Audit
+created_at
+timestamptz
+Required
+
+Unique constraint: employee_id + billing_month. A validated PMO value overrides the Shift Type default for that month.
+10. Billing Result Schema
+Column
+Type
+Purpose
+id
+uuid PK
+Monthly result
+employee_id
+uuid FK
+Employee
+billing_month
+date
+Month
+engagement_type
+varchar(30)
+Snapshot
+configuration_version
+integer
+Config used
+fixed_ctc_inr_annual
+numeric(18,2)
+Input snapshot
+monthly_fixed_salary_inr
+numeric(18,2)
+Annual / 12
+variable_pay_mode
+varchar(30)
+Input snapshot
+variable_pay_amount_inr
+numeric(18,2)
+Calculated/input
+fx_rate_inr_usd
+numeric(18,8)
+Snapshot
+salary_cost_usd
+numeric(18,2)
+Calculated
+operational_margin_amount_usd
+numeric(18,2)
+Calculated
+facility_cost_usd
+numeric(18,2)
+Calculated
+user_bundle_cost_usd
+numeric(18,2)
+Calculated
+shift_allowance_usd
+numeric(18,2)
+Calculated
+joining_bonus_component_usd
+numeric(18,2)
+Calculated
+fully_loaded_cost_usd
+numeric(18,2)
+Calculated
+billing_status
+varchar(30)
+CALCULATED / NOT_APPLICABLE / ERROR
+calculation_version
+varchar(30)
+Engine version
+calculated_at
+timestamptz
+Required
+
+Component table
+Columns
+billing_result_component
+id, billing_result_id, component_type, source_type, amount_usd, rate_value, description, created_at
+
+11. Billing Rules
+Rule
+Implementation
+Monthly fixed salary
+Annual Fixed CTC / 12
+None variable pay
+0
+Flat %
+Monthly Fixed Salary × configured Variable Pay %
+Custom amount
+Configured/entered monthly amount; convert consistently using effective FX
+Salary Cost
+Monthly salary INR ÷ FX + Variable Pay USD
+Operational Margin
+Salary Cost × Operational Margin %
+Joining Bonus
+Bonus ÷ 3 for first 3 applicable billing months; then 0
+GCC/NOC
+Salary + margin + facility + user bundle + shift + joining bonus
+Rebadge/Colocation
+Facility + User Bundle
+Non-GCC Fixed Bid
+No platform billing calculation
+Shift allowance
+PMO monthly override if present; otherwise Shift Type default
+Historical reproducibility
+Persist config snapshot/version and engine version
+
+12. Import Schema
+import_batch column
+Type
+Purpose
+id
+uuid PK
+Batch
+upload_type
+varchar(40)
+MASTER_DATA / SHIFT_ALLOWANCE
+file_name
+varchar(255)
+Original file
+storage_key
+varchar(500)
+Object storage
+status
+varchar(30)
+QUEUED / VALIDATING / IMPORTING / COMPLETED / COMPLETED_WITH_ERRORS / FAILED
+total_rows / valid_rows / failed_rows
+integer
+Counts
+uploaded_by
+uuid FK
+Actor
+started_at / completed_at
+timestamptz
+Processing times
+
+import_row_error column
+Type
+Purpose
+id
+uuid PK
+Error
+import_batch_id
+uuid FK
+Batch
+row_number
+integer
+CSV row
+column_name
+varchar(100)
+Field
+error_code
+varchar(60)
+Stable machine code
+error_message
+varchar(1000)
+User message
+raw_value
+varchar(1000)
+Mask/truncate if sensitive
+
+Stage uploaded rows before mutating live workforce data. Valid rows import; failed rows remain available for downloadable error output.
+13. Reporting
+Report
+Source
+Output
+Master Data Export
+employee + related tables
+Filtered employee data
+Billing Summary
+billing_result + components + employee
+Employee billing + Domain Lead/Engagement aggregates
+Headcount Summary
+employee
+Counts by Engagement Type, Domain Lead, Gender, GCC Presence
+
+Minimum filters: Engagement Type, Domain Lead, Billing Month/Year, Assignment Status. Excel and PDF must use the same underlying report query definitions.
+14. Audit Schema
+Column
+Type
+Rule
+id
+uuid PK
+Event
+occurred_at
+timestamptz
+Required
+actor_user_id
+uuid FK
+Actor
+action
+varchar(50)
+CREATE / UPDATE / DEACTIVATE / UPLOAD / CONFIG_CHANGE / LOGIN / EXPORT
+entity_type / entity_id
+varchar/uuid
+Target
+before_json / after_json
+jsonb
+No secrets; minimize PII
+correlation_id
+uuid
+Trace request/job
+ip_address
+inet
+Policy-controlled
+metadata_json
+jsonb
+Non-sensitive context
+
+Audit events are append-only from the application perspective. No UI should edit or delete audit records.
+15. API Contract
+Method
+Endpoint
+Purpose
+POST
+/api/v1/auth/login
+Sign in
+POST
+/api/v1/auth/logout
+Sign out
+POST
+/api/v1/auth/forgot-password
+Password reset
+GET
+/api/v1/me
+Current user/permissions
+GET
+/api/v1/employees
+Search/filter workforce
+POST
+/api/v1/employees
+Create employee
+GET
+/api/v1/employees/{id}
+View employee
+PUT
+/api/v1/employees/{id}
+Update employee
+POST
+/api/v1/employees/{id}/deactivate
+Deactivate/historical
+GET
+/api/v1/employees/{id}/billing?month=YYYY-MM
+Billing detail
+GET/POST
+/api/v1/reference/*
+Reference data
+GET/PUT
+/api/v1/billing-configuration
+Read/update configuration
+POST
+/api/v1/billing/recalculate
+Controlled recalculation
+POST
+/api/v1/imports/master-data
+Master data upload
+POST
+/api/v1/imports/shift-allowance
+Shift allowance upload
+GET
+/api/v1/imports/{id}
+Upload result
+GET
+/api/v1/reports/{type}
+Report request
+GET
+/api/v1/reports/{id}/download
+Report download
+
+16. RBAC
+Capability
+HR Manager
+HR Team Member
+GCC Lead
+View workforce
+Yes
+Yes
+Yes
+Create/update workforce
+Yes
+Yes
+No
+Maintain compensation
+Yes
+Yes
+No
+Upload CSV
+Yes
+Yes
+No
+View billing
+Yes
+Yes where authorized
+Yes read-only
+Edit Billing Configuration
+Yes
+No
+No
+Manage users
+Yes
+No
+No
+Audit trail
+Yes
+Authorized read
+No by default
+Reports/exports
+Yes
+Yes
+Yes
+
+17. Security & Privacy
+HTTPS/TLS in production; secure HTTP-only authentication cookies.
+Server-side authorization on every protected endpoint.
+Passwords handled by ASP.NET Core Identity PasswordHasher; never plaintext.
+Sensitive PII (Aadhar, PAN, DOB, addresses, emergency contacts) restricted and masked in standard views.
+Commercial billing configuration edit access restricted to HR Manager.
+Secrets stored in a secret manager, never source control.
+Upload extension/MIME/size controls and formula-injection protection for spreadsheet exports.
+Audit logs exclude passwords, tokens and unnecessary PII.
+EF Core/parameterized queries only; never concatenate SQL from user input.
+Rate-limit login, reset-password and upload endpoints.
+Encrypted backups and tested restore procedure.
+18. Database Constraints & Indexes
+Constraint/index
+Purpose
+UNIQUE employee.employee_id
+Stable business identifier
+UNIQUE employee_id + billing_month on shift override
+One monthly PMO value
+UNIQUE employee_id + billing_month + calculation version
+Prevent duplicate billing snapshots
+CHECK monetary fields >= 0
+Financial integrity
+CHECK percentages 0–100
+Rate integrity
+Foreign keys with restricted deletes
+Protect history
+Indexes on employee_id, engagement_type, assignment_status, domain_lead_id
+Fast search/filter
+Indexes on billing_month and audit timestamp
+Fast reports/audit
+Import batch + row indexes
+Fast upload results
+
+19. Background Jobs
+Job
+Trigger
+Implementation
+Master data import
+Upload confirmation
+BackgroundService
+Shift allowance import
+Upload confirmation
+BackgroundService
+Report generation
+Export request
+BackgroundService
+Batch billing recalculation
+Controlled request
+BackgroundService
+Temporary file cleanup
+Schedule
+BackgroundService
+
+A PostgreSQL job table with row locking (FOR UPDATE SKIP LOCKED) is sufficient for Phase 1. Redis or a dedicated message broker can be introduced later if workload requires it.
+20. Excel & PDF
+Excel: Open XML SDK; include report title, billing period, filters, readable formats, frozen headers and masked/excluded sensitive fields.
+PDF: server-side HTML template rendered with Microsoft Playwright; use the same report query service as Excel.
+Both formats must preserve the distinction between platform-calculated billing and Non-GCC Fixed Bid billed outside the platform.
+Employee-level billing should precede aggregate totals where applicable.
+21. Testing Strategy
+Area
+Required coverage
+Billing unit tests
+All engagement types, variable modes, joining-bonus months 1–4+, override/fallback, config versions
+Application integration
+Employee CRUD, compensation, imports, reports, permissions
+Database
+Constraints, uniqueness, effective-date overlap, rollback
+API
+Auth, authorization, validation, pagination/filtering
+E2E
+Login, workforce CRUD, billing, configuration, both uploads, reports, role restrictions
+Regression fixtures
+Known input/configuration → expected billing outputs
+
+22. Critical Billing Test Matrix
+Scenario
+Expected
+GCC + None
+Variable pay = 0
+GCC + Flat %
+Monthly fixed salary × configured %
+GCC + Custom Amount
+Configured/entered monthly amount
+Joining bonus month 1/2/3
+1/3 each month
+Joining bonus month 4+
+0
+PMO override exists
+Override applies
+No override
+Shift Type default applies
+Rebadge/Colocation
+Facility + User Bundle
+Non-GCC Fixed Bid
+No platform billing calculation
+
+23. Error Contract
+HTTP
+Code
+Meaning
+400
+VALIDATION_ERROR
+Invalid field/request
+401
+UNAUTHENTICATED
+Sign-in required
+403
+FORBIDDEN
+Role cannot perform action
+404
+NOT_FOUND
+Target does not exist
+409
+CONFLICT
+Duplicate/effective-date conflict
+422
+BUSINESS_RULE_ERROR
+Domain rule failure
+500
+INTERNAL_ERROR
+Unexpected server error; expose correlation ID only
+
+Error payload: code, message, fieldErrors where relevant, correlationId, timestamp. Do not expose secrets or sensitive PII.
+24. Deployment & Operations
+Concern
+Recommendation
+Build
+Reproducible frontend/backend artifacts
+Migrations
+EF Core migrations through controlled CI/CD
+Health
+/health/live and /health/ready
+Logging
+Structured JSON + correlation ID
+Monitoring
+Latency, errors, jobs, imports, report failures
+Backups
+Encrypted automated PostgreSQL backups + restore tests
+Retention
+Define retention for uploads/reports/error files
+Scaling
+Start with one API + worker; scale after load testing
+Security
+Regular dependency and container patching
+
+25. Build Sequence
+Create PostgreSQL schema and EF Core migrations.
+Implement authentication, users, roles and authorization.
+Implement reference data and workforce master data.
+Implement effective-dated compensation.
+Implement billing configuration and deterministic billing engine.
+Implement PMO monthly shift allowance override/import.
+Implement master-data CSV staging and partial success.
+Implement reporting query services and Excel/PDF export.
+Implement audit trail.
+Implement Next.js screens against the API contract.
+Run security, accessibility, performance and E2E validation.
+26. Engineering Acceptance Checklist
+All three roles receive only permitted actions.
+Conditional mandatory fields follow Engagement Type.
+Employment Category remains separate from Engagement Type.
+Billing configuration is versioned and not hard-coded.
+Joining Bonus is 1/3 for the first three applicable billing months and zero thereafter.
+Variable Pay supports None / Flat % / Custom Amount; Flat % uses monthly fixed salary.
+PMO monthly allowance overrides Shift Type default for Employee ID + Billing Month.
+CSV supports templates, validation, partial success and row-level errors.
+Excel/PDF reports use the same underlying report logic.
+Historical records are retained.
+Sensitive PII and commercial configuration are protected.
+Audit covers workforce, compensation, configuration, uploads and user changes.
+2,000+ employee records are supported without material degradation in normal workflows.
+27. Open Technical Decisions
+Decision
+Current recommendation
+Hosting
+Cloud or internal; containerized deployment keeps choice open
+SSO
+ASP.NET Identity in Phase 1; OIDC/SSO adapter later
+Storage
+S3-compatible or Azure Blob
+PII encryption
+Infrastructure encryption + restricted projections; field-level encryption if mandated
+Billing rounding
+Confirm currency precision and rounding mode with Finance before production
+Config approval
+Add two-person approval if finance governance requires it
+Report retention
+Confirm security/compliance retention policy
+Brand assets
+Confirm official HGV logo/font licensing before implementation

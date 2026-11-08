@@ -1,0 +1,719 @@
+HGV GCC WORKFORCE
+Master Data & Billing Platform
+App Flow Document
+Complete route map, navigation, screen behavior, user journeys, states and error flowsVersion 1.0 | Phase 1 | Build Reference
+Attribute
+Definition
+Product
+HGV GCC Workforce Master Data & Billing Platform
+Users
+HR Manager, HR Team Member, GCC Lead
+Default Route
+/ → /login
+Landing
+Role-aware /dashboard
+Primary Flow
+Workforce → Billing → Reports
+Phase 1
+Standalone; no HRMS/payroll/SSO integration
+
+Build intentThis document translates the approved BRD and PRD into screen-level behavior. The procurement sample is used only as a structural reference; procurement-specific use cases are not included.
+
+
+1. Product Flow Summary
+The primary journey is: authenticate → role-aware dashboard → maintain workforce master data → maintain compensation where permitted → calculate billing using protected configuration → upload monthly shift allowances where applicable → generate finance-ready reports.
+Area
+Flow
+Authentication
+Login → session → dashboard
+Workforce
+List → create/detail → edit → validate → save
+Billing
+Record → compensation/billing → calculate → review
+Bulk Upload
+Choose upload → validate → partial success → result
+Reports
+Select report → filters → preview → Excel/PDF
+Configuration
+Protected settings → validate → confirm → audit
+Administration
+Users/roles/status → save → audit
+
+2. Site Map
+Route
+Screen
+Access
+/login
+Login
+Public
+/forgot-password
+Forgot Password
+Public
+/reset-password/[token]
+Reset Password
+Public
+/dashboard
+Role-aware Dashboard
+All authenticated roles
+/workforce
+Workforce List
+All
+/workforce/new
+Create Workforce Record
+HR Manager / HR Team Member
+/workforce/[id]
+Workforce Detail
+All
+/workforce/[id]/edit
+Edit Workforce Record
+HR Manager / HR Team Member
+/workforce/[id]/billing
+Compensation & Billing
+All; edit HR Manager/Team Member
+/bulk-upload
+Bulk Upload Center
+HR Manager / HR Team Member
+/bulk-upload/master-data
+Master Data Upload
+HR Manager / HR Team Member
+/bulk-upload/shift-allowance
+Monthly Shift Allowance Upload
+HR Manager / HR Team Member
+/bulk-upload/[id]
+Upload Result
+Authorized
+/reports
+Reports Center
+All
+/reports/master-data
+Master Data Export
+All
+/reports/billing
+Billing Summary
+All
+/reports/headcount
+Headcount Summary
+All
+/billing-configuration
+Billing Configuration
+HR Manager
+/users
+User Administration
+HR Manager
+/audit
+Audit Trail
+HR Manager / authorized read
+/account
+My Account
+All
+/search
+Global Search
+All
+/404
+Not Found
+All
+/500
+Server Error
+All
+
+3. Navigation Shell
+3.1 Left Sidebar
+Item
+HR Manager
+HR Team Member
+GCC Lead
+Dashboard
+✓
+✓
+✓
+Workforce
+✓
+✓
+✓
+Bulk Upload
+✓
+✓
+—
+Reports
+✓
+✓
+✓
+Billing Configuration
+✓ edit
+—
+—
+User Administration
+✓
+—
+—
+Audit Trail
+✓
+—
+—
+
+Unauthorized items are hidden rather than merely disabled.
+Desktop: persistent sidebar; smaller screens: collapsible navigation.
+Logo click returns to /dashboard.
+Top bar includes global search, notifications and avatar menu.
+Nested screens use breadcrumbs.
+3.2 Notification & Account Menus
+Bell shows recent unread events and links to the affected record/report/upload.
+Mark all as read is available.
+Avatar menu contains My Account and Sign Out.
+Sign Out clears the session and returns to /login.
+3.3 Breadcrumbs
+Shown on nested pages. Example: Workforce > Employee Name > Compensation & Billing. All crumbs except the current page are clickable.
+4. Authentication Flows
+4.1 Login
+Route: /login | Public
+Fields: Email, Password.
+Sign In and Forgot Password actions.
+Success → /dashboard.
+Invalid credentials → inline error.
+Disabled account → account-disabled message.
+4.2 Password Reset
+Select Forgot Password.
+Enter email and request reset link.
+Show generic confirmation.
+Open time-limited reset link.
+Enter and confirm new password.
+Success → /login with confirmation.
+4.3 Session & Authorization
+Authenticated routes require an active session.
+Expired sessions redirect to /login.
+API authorization mirrors UI RBAC.
+Direct access to unauthorized routes is blocked.
+5. Dashboard Flows
+Route: /dashboard | All authenticated roles
+Role
+Dashboard Content
+HR Manager
+Workforce overview, billing snapshot, data quality, recent uploads, recent activity, quick actions
+HR Team Member
+Same operational view; no Billing Configuration/User Administration actions
+GCC Lead
+Read-only workforce/billing overview, reports and filters
+
+Empty dashboard: zero-value cards and empty tables/panels; no fake records.
+6. Workforce Master Data Flows
+6.1 Workforce List
+Route: /workforce | All roles
+Search by Employee Name, Employee ID, Domain Lead, HGV Role and authorized fields.
+Filters: Engagement Type, Domain Lead, Assignment Status, GCC Presence, Employment Category.
+Table includes Employee Name, Employee ID where applicable, Engagement Type, Employment Category, Domain Lead, Assignment Status, GCC Presence and Last Updated.
+Click row → /workforce/[id].
+Add Employee is visible only to HR Manager/HR Team Member.
+6.2 Create Workforce Record
+Select Add Employee.
+Enter identity/employment data.
+Select Engagement Type.
+System dynamically applies mandatory fields.
+Enter organization, sourcing, compensation and shift data as applicable.
+Validate controlled values and formats.
+Review billing applicability.
+Save and open the new record.
+6.3 Dynamic Mandatory Rules
+Engagement
+Dynamic Required Fields
+GCC
+Employee ID, HGV Start Date, HGV Department, Employment Category, Fixed CTC, Variable Pay, Joining Bonus, Shift Type
+NOC
+Employee ID, HGV Start Date, HGV Department, Employment Category, Fixed CTC, Variable Pay, Joining Bonus, Shift Type
+Rebadge
+HGV Start Date, HGV Department, Shift Type
+Colocation
+HGV Start Date, HGV Department, Shift Type
+Non-GCC Fixed Bid
+Employee ID, Employment Category, Project
+
+All records require Employee Name, Assignment Status, Gender, HGV Role, Domain Lead, Engagement Type, Source and GCC Presence.
+6.4 Workforce Detail
+Header: Employee Name, Employee ID where applicable, Assignment Status, Engagement Type.
+Sections: Identity & Employment; Organization; Sourcing; Compensation; Attrition; Personal/Contact; Address; Compliance.
+Billing summary card where applicable.
+Edit available to HR Manager/HR Team Member.
+Sensitive PII is masked according to authorization.
+6.5 Edit
+Pre-populated form.
+Changing Engagement Type re-evaluates required fields and billing applicability.
+Save blocked until valid.
+Material changes create audit events.
+Inactive/historical records remain available.
+7. Compensation & Billing Flows
+7.1 Billing Detail
+Route: /workforce/[id]/billing | All roles; edit HR Manager/Team Member
+Display compensation inputs, billing applicability, component breakdown and monthly/annual outputs.
+Calculated values are read-only.
+Non-GCC Fixed Bid displays 'Billing calculated outside platform'.
+7.2 Variable Pay
+Mode
+Behavior
+None
+Amount = 0
+Flat %
+Monthly Fixed Salary × configured percentage
+Custom Amount
+Configured/entered amount applied consistently
+
+7.3 Joining Bonus
+Joining Bonus is amortized over three billing months and the UI should expose the schedule.
+Month
+Component
+1
+1/3 of Joining Bonus
+2
+1/3 of Joining Bonus
+3
+1/3 of Joining Bonus
+4+
+0
+
+7.4 Shift Allowance
+Check PMO-validated amount for Employee ID + Billing Month.
+If present, use it.
+If absent, use Shift Type default rate.
+Label source as PMO validated or Shift Type default.
+Include resolved amount in billing.
+7.5 Billing Component Preview
+Salary Cost
+Operational Margin
+Facility Cost
+User Bundle Cost
+Shift Allowance
+Joining Bonus Component
+Monthly Fully Loaded Cost
+Annual Fully Loaded Cost
+8. Billing Configuration Flow
+Route: /billing-configuration | HR Manager only
+Setting
+UI
+FX Rate INR → USD
+Numeric input
+Variable Pay Rate — Flat %
+Percentage input
+Operational Margin %
+Percentage input
+Facility Cost USD
+Currency input
+User Bundle Cost USD
+Currency input
+Shift Allowance by Shift Type
+Repeatable rate rows
+
+Open configuration.
+Edit setting(s).
+Validate values.
+Show change summary.
+Confirm Save.
+Apply new effective configuration.
+Write audit event.
+SecurityActual commercial rates are protected configuration and should not be embedded in code, generic documentation or public examples.
+
+9. Bulk Upload Flows
+9.1 Center
+Route: /bulk-upload | HR Manager / HR Team Member
+Upload
+Purpose
+Required Core Fields
+Master Data
+Create/update workforce records
+Approved master-data template
+Monthly Shift Allowance
+Load PMO validated monthly amounts
+Employee ID, Billing Month, Validated Shift Allowance Amount
+
+9.2 Master Data Upload
+Download template.
+Select CSV.
+Validate file structure.
+Validate mandatory/controlled fields and identifiers.
+Preview valid/failed counts.
+Confirm import.
+Import valid rows.
+Generate row-level error file.
+Audit upload.
+9.3 Shift Allowance Upload
+Validate Employee ID and Billing Month.
+Prevent ambiguous duplicate employee/month rows.
+Imported values become monthly billing overrides.
+Show new vs updated rows.
+9.4 Upload Result
+State
+Behavior
+Processing
+Progress/status display
+Completed
+Imported/failed counts + error download
+Completed with Errors
+Successful rows retained + failed-row table
+Failed
+Error summary + Retry/New Upload
+
+10. Reporting & Export Flows
+Report
+Route
+Minimum Filters
+Master Data Export
+/reports/master-data
+Engagement Type, Domain Lead, Assignment Status
+Billing Summary
+/reports/billing
+Engagement Type, Domain Lead, Billing Month/Year, Assignment Status
+Headcount Summary
+/reports/headcount
+Engagement Type, Domain Lead, Gender, GCC Presence
+
+10.1 Billing Report Flow
+Choose Billing Month/Year.
+Apply filters.
+Resolve records and effective billing configuration.
+Preview employee values and aggregates.
+Export Excel or PDF.
+Show export confirmation.
+10.2 Report States
+Loading: skeleton/table loading.
+Results: table + totals + filter summary.
+No results: headers remain visible, no rows.
+Export failure: Retry.
+Unauthorized data: masked/omitted.
+11. Global Search, Notifications & Account
+11.1 Search
+Route: /search?q=[query] | All roles
+Search suggestions after short debounce.
+Results grouped by authorized entity type.
+Each result includes name/identifier, type and status.
+Click → target record.
+RBAC and masking apply.
+No-result state uses an empty results table.
+11.2 Notifications
+Event
+Recipient
+Bulk upload completed
+Uploader
+Bulk upload completed with errors
+Uploader
+Billing configuration changed
+HR Manager / authorized users
+Report export completed
+Requesting user
+Material workforce update
+Authorized users where configured
+
+11.3 Account
+Route: /account | All roles
+Profile fields permitted by implementation.
+Change password.
+Notification preferences where implemented.
+Sign out.
+12. User Administration
+Route: /users | HR Manager
+Table: Name, Email, Role, Status, Last Activity.
+Filters: Role, Status.
+Add User, Edit Role, Activate/Deactivate.
+Allowed roles: HR Manager, HR Team Member, GCC Lead.
+12.1 User Save Flow
+Enter name/email.
+Select role.
+Validate uniqueness and role.
+Save.
+Send activation/invitation instruction as configured.
+Audit creation/role change.
+12.2 Deactivate
+Requires confirmation. Historical audit events remain. Deactivated users cannot create new sessions.
+13. Audit Trail
+Route: /audit | HR Manager / authorized read
+Event
+Captured Information
+Workforce change
+Actor, timestamp, record, action, relevant before/after
+Compensation change
+Actor, timestamp, employee, changed component
+Billing configuration
+Actor, timestamp, setting, old/new value
+Bulk upload
+Uploader, type, counts, status, error reference
+User/role change
+Actor, target, old/new role/status
+
+Filters: date, event type, actor, entity.
+Append-only from UI.
+Sensitive values follow security/masking policy.
+14. End-to-End User Journeys
+14.1 HR Manager — Employee to Billing Report
+Login → Dashboard.
+Workforce → Add Employee.
+Select Engagement Type.
+Complete dynamic required fields.
+Save.
+Open Compensation & Billing.
+Review components.
+Adjust Billing Configuration if authorized/required.
+Reports → Billing Summary.
+Select month/filters.
+Review totals.
+Export Excel/PDF.
+14.2 HR Team Member — Bulk Workforce Update
+Login.
+Bulk Upload → Master Data.
+Download template.
+Populate CSV.
+Upload and validate.
+Confirm import.
+Download error file if applicable.
+Verify in Workforce.
+14.3 HR Team Member — Monthly Shift Allowance
+Bulk Upload → Monthly Shift Allowance.
+Upload PMO-validated data.
+Review validation.
+Confirm import.
+Open employee Billing Detail.
+Verify PMO-validated source.
+14.4 GCC Lead — Review Billing
+Login.
+Dashboard.
+Reports → Billing Summary.
+Filter by Domain Lead and Billing Month.
+Review read-only results.
+Export if permitted.
+14.5 HR Manager — Change Billing Rules
+Billing Configuration.
+Review current settings.
+Edit.
+Review change summary.
+Confirm.
+Audit event created.
+Review resulting billing/report.
+15. Global UI States
+State
+Behavior
+Loading
+Skeleton/spinner; prevent duplicate destructive actions
+Success
+Toast/banner confirms action
+Validation Error
+Inline field error; preserve inputs
+Unsaved Changes
+Warn before leaving dirty form
+Permission Denied
+Redirect to dashboard with clear message
+Session Expired
+Redirect to login
+Empty Data
+Headers/filters/actions remain; no fake data
+Server Error
+Retry + support path
+
+16. Error States & Edge Cases
+16.1 Global
+Scenario
+Behavior
+404
+Not found + Back to Dashboard
+500
+Something went wrong + Retry
+Disabled account
+Account disabled + administrator guidance
+Unauthorized route
+Redirect to dashboard
+Session expired
+Redirect to login + session message
+
+16.2 Inline
+Scenario
+Behavior
+Required field missing
+Inline error; save blocked
+Invalid date/number
+Inline error; save blocked
+Duplicate Employee ID
+Inline duplicate error
+Unknown CSV controlled value
+Row rejected
+Malformed CSV
+File-level error; no import
+Partial CSV failure
+Valid rows import; failed rows downloadable
+Duplicate employee/month allowance
+Row-level error unless replacement semantics are explicitly selected
+Invalid billing configuration
+Setting-level error; save blocked
+Export failure
+Retry
+
+16.3 Billing Edge Cases
+Missing Fixed CTC for GCC/NOC → billing cannot complete.
+Flat % without configured rate → configuration error; no misleading result.
+Joining Bonus → exactly three billing months.
+PMO allowance present → overrides Shift Type default.
+Missing required Shift Type → incomplete billing.
+Non-GCC Fixed Bid → no platform billing calculation.
+17. Empty State Rules
+Use restrained enterprise empty states. Tables retain headers and filters. Never show fabricated records.
+Page
+Empty State
+Workforce
+Headers/filters visible; no rows
+Dashboard
+Zero-value cards and empty panels
+Bulk Upload History
+Headers visible; no uploads
+Reports
+Filters visible; empty result table
+Search
+Empty results area
+Notifications
+No entries; actions remain
+Audit Trail
+Filters/headers visible; no events
+User Administration
+Headers visible; no rows
+
+18. Responsive & Accessibility Rules
+Desktop is primary for data entry.
+Tablet collapses sidebar without losing functionality.
+Mobile stacks forms and allows horizontal table scrolling where necessary.
+Critical actions are not hover-only.
+Keyboard focus order follows visual order.
+Errors are associated with fields.
+Status is not conveyed by color alone.
+HGV colors must maintain accessible contrast.
+19. HGV Visual & Interaction Direction
+Element
+Guidance
+Primary
+Navy #202B46
+Accent
+Teal #00B0B9
+Supporting
+Sky Blue, Yellow, Coral, Sand, Light Gray
+Typography
+Hilton Serif headings; Hilton Sans UI/body, subject to licensing
+Style
+Clean, premium, simple, people-first; whitespace and clear hierarchy
+Components
+Card summaries, rounded panels, subtle shadows
+Tone
+Sentence case throughout
+
+Asset dependencyConfirm official HGV logo/brand assets and web-font licensing/fallback before UI development.
+
+20. Screen-by-Screen Build Checklist
+Screen
+Must Include
+Login
+Credentials, Forgot Password, validation, disabled state
+Dashboard
+Role-specific cards, quick actions, recent activity/upload
+Workforce List
+Search, filters, table, Add Employee for permitted roles
+Create/Edit
+Dynamic required fields, validation, save/cancel, unsaved warning
+Employee Detail
+Data sections, status, billing summary, role-aware edit
+Billing Detail
+Inputs, component breakdown, read-only calculations
+Bulk Upload
+Upload types, templates, history
+Upload Result
+Counts, errors, downloadable error file
+Reports
+Report cards, filters, result table, export
+Billing Configuration
+Protected settings, validation, confirmation, audit
+Users
+Users, roles, status, create/edit/deactivate
+Audit
+Filters, event list, change detail
+Account
+Profile, password, sign out
+404/500
+Recoverable error paths
+
+21. Route Transition Reference
+From
+Action
+To
+/login
+Sign in
+/dashboard
+/dashboard
+Workforce
+/workforce
+/workforce
+Add Employee
+/workforce/new
+/workforce
+Select row
+/workforce/[id]
+/workforce/[id]
+Edit
+/workforce/[id]/edit
+/workforce/[id]
+Billing
+/workforce/[id]/billing
+/dashboard
+Bulk Upload
+/bulk-upload
+/bulk-upload
+Master Data
+/bulk-upload/master-data
+/bulk-upload
+Shift Allowance
+/bulk-upload/shift-allowance
+/bulk-upload/*
+View result
+/bulk-upload/[id]
+/dashboard
+Reports
+/reports
+/reports
+Billing
+/reports/billing
+/reports
+Master Data
+/reports/master-data
+/reports
+Headcount
+/reports/headcount
+/dashboard
+Billing Configuration
+/billing-configuration
+/dashboard
+User Administration
+/users
+/dashboard
+Audit
+/audit
+Top Bar
+Search
+/search?q=[query]
+Avatar
+My Account
+/account
+Avatar
+Sign Out
+/login
+
+22. Build Notes & Confirmed Decisions
+BRD is the source of truth for Phase 1 business scope.
+PRD defines detailed product behavior; this document defines screen and route behavior.
+Joining Bonus is confirmed as three-month amortization.
+Variable Pay supports None / Flat % / Custom Amount; Flat % uses Monthly Fixed Salary.
+Commercial billing rates remain protected configuration and are not included in documentation examples.
+Non-GCC Fixed Bid is maintained as master data but billed outside the platform.
+Phase 1 is standalone with no HRMS/payroll/SSO integration.
+Architecture should remain extensible for Phase 2 dashboards and future HRMS integration.
+23. App Flow Acceptance Checklist
+All three roles reach only permitted screens/actions.
+Dynamic mandatory fields respond correctly to Engagement Type.
+Calculated billing outputs are read-only and use protected configuration.
+Variable Pay and three-month Joining Bonus behave exactly as specified.
+PMO monthly shift allowance overrides the default Shift Type rate when available.
+CSV supports templates, validation, partial success and row-level errors.
+Reports support required filters and Excel/PDF export.
+Billing Configuration and User Administration are restricted to HR Manager.
+Sensitive PII is protected and masked.
+Audit events cover compensation, configuration, uploads and user changes.
+Loading, success, validation, empty, permission and system-error states are defined.
+Responsive and accessibility behavior is covered.
+End of DocumentHGV GCC Workforce Master Data & Billing Platform — App Flow Document v1.0Prepared as the screen-level build reference for Phase 1.

@@ -1,0 +1,734 @@
+HGV GCC WORKFORCE
+Master Data & Billing Platform
+Product Requirements Document
+Version 1.0  |  Phase 1
+Attribute
+Definition
+Product Stage
+Phase 1 — production-ready master data, billing and reporting platform
+Target Users
+HR Manager, HR Team Member, GCC Lead
+Primary Use Case
+Centralized workforce master data and configurable GCC/NOC/Rebadge/Colocation billing
+Integrations — Phase 1
+CSV import/export; no HRMS, payroll or SSO integration
+Future Direction
+Phase 2 dashboards and future HRMS integration
+
+ConfidentialityCommercially sensitive billing rates, percentages and dollar values are excluded from this PRD. They are maintained only through protected Admin Billing Configuration.
+
+
+1. Executive Summary
+The HGV GCC Workforce Master Data & Billing Platform is a Phase 1 internal enterprise application intended to replace the current Excel-based workforce and billing administration process. The current model uses multiple workbooks for GCC, NOC, Rebadge, Colocation, Non-GCC Fixed Bid and related workforce populations. Manual maintenance creates data-entry drift, stale totals, blank fields and inconsistent calculations.
+The platform will provide a single validated source of truth, controlled reference data, compensation capture, configurable billing rules, CSV bulk upload, finance-ready Excel/PDF reports and role-based access. It will support GCC and NOC salary-based billing, Rebadge and Colocation facility/user-bundle billing, and maintain Non-GCC Fixed Bid master data without calculating its billing.
+This PRD expands the attached BRD into product behavior, workflows, acceptance criteria, architecture recommendations and implementation detail. The attached sample PRD is used only as a reference for explanatory depth and structure; its procurement use case is not carried into this product.
+Confirmed product decisionsJoining Bonus: three-month amortization. Variable Pay: None / Flat % / Custom Amount, with Flat % applied to monthly Fixed Salary. Technology: a recommended technology stack is included.
+
+2. Problem Statement & Current State
+2.1 Current State
+Pain Point
+Business Impact
+Product Response
+Multiple Excel workbooks
+Version drift and inconsistent master data
+Single source of truth
+Manual entry
+Missing/invalid fields and rework
+Field-level validation
+Stale totals
+Lower confidence in billing/headcount
+Centralized calculations
+Manual billing logic
+Formula inconsistency and dependency on individuals
+Configurable billing engine
+Shift allowance dependency
+Monthly values can diverge from PMO validation
+Validated monthly upload + fallback rate
+Historical attrition
+Loss of workforce context
+Inactive/historical records
+Report preparation
+Repeated manual consolidation
+Excel/PDF structured reports
+Sensitive rates
+Risk of unauthorized commercial changes
+Protected Billing Configuration
+
+2.2 Business Impact
+Reduce spreadsheet maintenance and reconciliation effort.
+Improve completeness and consistency of workforce records.
+Standardize billing calculations and make rules configurable.
+Provide traceable finance-ready reporting.
+Protect sensitive personal and commercial information.
+Create an extensible foundation for dashboards and future integrations.
+3. Goals & Non-Goals
+3.1 Goals
+Replace Excel as the primary workforce master-data maintenance mechanism.
+Create a validated single source of truth for Phase 1 populations.
+Separate workforce data from commercially sensitive billing configuration.
+Automate GCC/NOC billing and Rebadge/Colocation applicable cost calculations.
+Support CSV bulk upload with partial success and row-level errors.
+Generate finance-ready Excel and PDF reports.
+Enforce RBAC and protect sensitive PII.
+Enable future Phase 2 dashboards and HRMS integration.
+3.2 Non-Goals — Phase 1
+Interactive dashboards; planned for Phase 2.
+HRMS/payroll/SSO integration.
+Automated payroll processing.
+Platform billing for Non-GCC Fixed Bid.
+Replacing PMO's monthly shift-allowance validation process.
+4. User Personas & Roles
+Role
+Responsibilities
+Access
+HR Manager
+Master data, compensation, Billing Configuration, reports, user administration
+Full access
+HR Team Member
+Master data, compensation, uploads and reports
+No Billing Configuration edit
+GCC Lead
+Review workforce, compensation and billing; reporting
+Read-only
+
+4.1 HR Manager
+Create/update workforce records.
+Maintain compensation.
+Manage controlled reference values.
+Edit Billing Configuration.
+Generate reports.
+Manage users/roles.
+Review audit events.
+4.2 HR Team Member
+Create/update workforce records within scope.
+Maintain compensation.
+Perform CSV uploads.
+Generate permitted reports.
+View billing figures where authorized.
+Cannot edit Billing Configuration.
+4.3 GCC Lead
+View workforce, compensation and billing figures.
+Filter and export reports.
+Cannot edit data, configuration or users.
+5. Product Overview & Navigation
+Recommended navigation: Login/Landing, Workforce Master Data, Compensation & Billing, Bulk Upload, Reports, Billing Configuration, User Administration and Audit Trail. Billing Configuration and user administration must be hidden or read-only for unauthorized roles.
+5.1 Core Experience
+Searchable workforce list with filters and key billing/status fields.
+Record detail/edit screen grouped into logical sections.
+Controlled dropdowns and searchable reference fields.
+Context-sensitive mandatory fields based on Engagement Type.
+Clear success, error, loading and empty states.
+Responsive design, with desktop optimized for data-heavy workflows.
+6. Master Data Requirements
+6.1 Controlled Fields
+Field
+Allowed/Control
+Requirement
+Domain Lead
+Searchable dropdown + Add New
+Controlled reference
+Source
+Searchable dropdown + Add New
+Controlled reference
+Engagement Type
+GCC / NOC / Rebadge / Colocation / Non-GCC
+Fixed list
+GCC Presence
+Yes / No
+Fixed list
+Shift Type
+Admin-configurable dropdown
+Billing-linked
+Employment Category
+Full Time / Individual Consultant / C2C Consultant / Rebadge / Colocation
+Separate from Engagement Type
+Variable Pay Mode
+None / Flat % / Custom Amount
+Billing rule
+
+6.2 Mandatory Field Matrix
+Field
+Mandatory For
+Employee Name, Assignment Status, Gender, HGV Role, Domain Lead, Engagement Type, Source, GCC Presence
+All
+Employee ID
+GCC / NOC / Non-GCC
+HGV Start Date, HGV Department
+GCC / NOC / Rebadge / Colocation
+Employment Category
+GCC / NOC / Non-GCC
+Project
+Non-GCC
+Fixed CTC, Variable Pay, Joining Bonus
+GCC / NOC
+Shift Type
+GCC / NOC / Rebadge / Colocation
+
+6.3 Data Dictionary
+Area
+Fields
+Identity & Employment
+Engagement Type, Employee ID, Employee Name, Oracle Person Number, Assignment Status, Employment Category, Date of Joining, HGV Start/End Date
+Organization
+HGV Department, Domain Lead, Reporting Manager, HGV Role/Designation, Business Unit/Practice/ Sub Practice, Grade/Level, Project, Employee Group
+Sourcing
+Source, Sub-Source
+Compensation
+Fixed CTC, Variable Pay, Joining Bonus, Variable Pay Mode, Shift Type
+Attrition
+Attrition Reason
+Personal/Contact
+Gender, DOB, Blood Group, Marital Status, Spouse Name, Guardian, Qualification, Contact, Emergency Contact, Personal/MT/HGV emails
+Address
+Permanent/Current Address, Base Location
+Compliance
+GCC Presence, Notice Period, Skills, BGV Status, Aadhar, PAN
+
+6.4 Historical Attrition
+Inactive/historical records must be retained rather than deleted. Assignment Status and Attrition Reason should preserve the employee lifecycle and support historical reporting.
+7. Compensation & Billing Engine
+7.1 Applicability
+Engagement Type
+Salary
+Facility
+User Bundle
+Shift Allowance
+Billing
+GCC
+Yes
+Yes
+Yes
+Yes
+Required
+NOC
+Yes
+Yes
+Yes
+Yes
+Required
+Rebadge
+No
+Yes
+Yes
+No
+Facility + User Bundle
+Colocation
+No
+Yes
+Yes
+No
+Facility + User Bundle
+Non-GCC Fixed Bid
+No platform calculation
+Outside platform
+Outside platform
+Outside platform
+Outside platform
+
+7.2 Monthly Fixed Salary
+FormulaMonthly Fixed Salary (INR) = Annual Fixed CTC (INR) ÷ 12
+
+7.3 Variable Pay
+The BRD's earlier symbolic wording could be circular if Variable Pay were calculated from Salary Cost. This PRD resolves that ambiguity using the confirmed rule: Flat % is applied to monthly fixed salary.
+Mode
+Calculation
+None
+Variable Pay Amount = 0
+Flat %
+Variable Pay Amount (INR) = Monthly Fixed Salary × Configured Variable Pay %
+Custom Amount
+Variable Pay Amount = configured/entered custom amount
+
+7.4 Salary Cost
+FormulaSalary Cost (USD) = (Monthly Fixed Salary (INR) ÷ FX Rate) + Variable Pay Amount (USD)
+
+Where custom variable pay is stored in INR, it should be converted consistently using the configured FX rate.
+7.5 Joining Bonus — Three-Month Amortization
+Joining Bonus is included in billing and amortized over three billing months. The platform applies one-third of the recorded bonus amount to each of the three applicable months and stops the component after month three.
+FormulaMonthly Joining Bonus Component = Joining Bonus Amount ÷ 3, applied for three billing months.
+
+7.6 Fully Loaded Cost
+FormulaFully Loaded Cost = Salary Cost + Operational Margin Amount + Facility Cost + User Bundle Cost + Shift Allowance + Monthly Joining Bonus ComponentOperational Margin Amount = Salary Cost × Operational Margin %
+
+7.7 Rebadge & Colocation
+FormulaFully Loaded Cost = Facility Cost + User Bundle Cost
+
+7.8 Shift Allowance
+Use PMO-validated monthly allowance if an Employee ID + Billing Month record exists.
+If no validated monthly value exists, use the configured Shift Type allowance rate.
+Apply the resulting amount to applicable GCC/NOC billing.
+Expose the resulting amount in employee-level billing output.
+7.9 Outputs
+Fixed CTC INR
+Variable Pay Mode
+Shift Type
+Monthly Salary Cost USD
+Monthly Fully Loaded Cost USD
+Annual Fully Loaded Cost USD
+Aggregates by Domain Lead, Engagement Type and overall
+8. Billing Configuration
+Actual commercial values are excluded from this document. They are stored in protected configuration and are not hardcoded.
+Configuration
+Purpose
+Edit Access
+FX Rate INR → USD
+Currency conversion
+HR Manager
+Variable Pay Rate — Flat %
+Flat % calculation
+HR Manager
+Operational Margin %
+Margin component
+HR Manager
+Facility Cost USD
+Facility component
+HR Manager
+User Bundle Cost USD
+Bundle component
+HR Manager
+Shift Allowance Rates by Shift Type
+Default shift allowance
+HR Manager
+
+Configuration updates require no software deployment.
+Validate numeric ranges and malformed values.
+Audit who changed what and when.
+Prefer effective-dated/versioned configuration for historical billing reproducibility.
+9. CSV Bulk Upload
+Upload
+Purpose
+Required Core Columns
+Master Data Upload
+Create/update workforce records
+Approved master-data template fields
+Monthly Shift Allowance Upload
+Load PMO-validated monthly allowance
+Employee ID, Billing Month, Validated Shift Allowance Amount
+
+9.1 Validation
+Validate mandatory fields, controlled fields, dates, numbers and identifiers.
+CSV must not silently create new dropdown/reference values.
+New reference values are added through the authorized Add New flow.
+Reject duplicate/conflicting rows with clear errors.
+Support partial success: valid rows import while invalid rows are returned with row-level errors.
+Provide downloadable templates and downloadable error files.
+9.2 Import Flow
+Download template.
+Populate file.
+Upload.
+Validate schema and business rules.
+Show valid/failed counts.
+Confirm import.
+Import valid rows and generate error file.
+Record upload event in audit trail.
+10. Reporting & Exports
+Report
+Purpose
+Key Content
+Master Data Export
+Operational workforce extract
+Full/filtered records
+Billing Summary
+Finance-ready monthly report
+Salary Cost + Fully Loaded Cost per employee; Domain Lead/Engagement aggregates
+Headcount Summary
+Population overview
+Counts by Engagement Type, Domain Lead, Gender, GCC Presence
+
+Minimum filters: Engagement Type, Domain Lead, Billing Month/Year and Assignment Status. Outputs: Excel and PDF. Reports must use the same definitions and billing rules as the platform.
+Employee-level billing values should precede aggregates where applicable.
+Totals should be traceable to underlying records.
+Sensitive data should be excluded or masked from general-purpose reports.
+11. UI/UX & HGV Branding
+Element
+Requirement
+Colors
+Navy #202B46; White #FFFFFF; Sky Blue #C5DBEF; Yellow #FFECAE; Coral #E73C3E; Teal #00B0B9; Sand #F5F1EB; Light Gray #F1F1F1
+Style
+Clean contemporary enterprise UI, strong hierarchy, whitespace, card-based panels, rounded surfaces, subtle shadows
+Responsive
+Desktop, tablet and mobile; desktop prioritized for data-heavy tasks
+Typography
+Hilton Serif headings and Hilton Sans UI/body, subject to licensing; approved fallback required
+Language
+Sentence case
+Branding
+HGV logo/approved assets on login/landing and consistent brand spacing
+
+11.1 Accessibility
+Meet WCAG AA contrast expectations for supported workflows.
+Do not rely on color alone for meaning.
+Keyboard-accessible forms, tables, filters and dialogs.
+Readable typography and clear error messages.
+Test light brand colors against accessibility requirements.
+12. Recommended System Architecture
+The following stack is a recommendation for implementation, not a mandatory technology decision stated in the BRD.
+Layer
+Recommended Technology
+Why
+Frontend
+React + TypeScript
+Responsive enterprise UI and maintainable component model
+Backend
+ASP.NET Core / .NET 8 Web API
+Strong typing, modular services and enterprise maintainability
+Database
+PostgreSQL
+Relational integrity for master, billing, configuration and audit data
+Authentication
+Application RBAC in Phase 1; identity-provider abstraction
+Supports current standalone scope while leaving SSO path open
+File Processing
+Server-side CSV validation service
+Controlled imports and partial-success processing
+Reporting
+Server-side Excel/PDF generation
+Consistent finance-ready exports
+API Contract
+OpenAPI/Swagger
+Future integration readiness
+Observability
+Centralized logs + application monitoring
+Operational support and troubleshooting
+Hosting
+Cloud or internal infrastructure — organizational decision
+Keeps deployment choice open
+
+12.1 Logical Components
+Web UI
+API/Application Layer
+Master Data Service
+Compensation Service
+Billing Engine
+Configuration Service
+Import Service
+Reporting Service
+Audit Service
+Relational Database
+12.2 Architecture Principles
+Billing rules are deterministic and configuration-driven.
+No commercial rate is hardcoded in application code.
+Billing results are reproducible from employee inputs, billing month and effective configuration.
+Business rules are tested independently of the UI.
+Data/API boundaries should support future HRMS integration.
+13. Data Architecture
+Entity
+Purpose / Key Data
+Workforce Record
+Employee ID, name, status, gender, engagement, employment category
+Organization Assignment
+Department, Domain Lead, manager, role, practice, grade/level, project
+Sourcing
+Source, Sub-Source
+Compensation
+Fixed CTC, Variable Pay, Mode, Joining Bonus, Shift Type
+Attrition
+Status, HGV End Date, Attrition Reason
+Personal/Contact
+DOB, contacts, emails, addresses
+Billing Configuration
+FX, variable %, margin, facility, bundle, shift rates
+Monthly Shift Allowance
+Employee ID, Billing Month, validated amount
+Billing Result
+Employee, month, salary cost, loaded cost and components
+User/Role
+User, role, status
+Audit Event
+Actor, timestamp, entity, action, before/after where appropriate
+
+Separate Engagement Type from Employment Category.
+Do not store calculated totals as user-editable fields.
+Use stable identifiers and database constraints where appropriate.
+Preserve inactive historical records.
+Version/effective-date billing configuration where feasible.
+14. Core User Flows
+14.1 Create Workforce Record
+Open Workforce Master Data and select Add.
+Enter identity, employment, organization and sourcing information.
+System applies mandatory rules based on Engagement Type.
+Enter applicable compensation and shift data.
+System validates fields.
+System determines billing applicability.
+Save record.
+Confirm creation and audit event.
+14.2 Update Compensation
+Open applicable GCC/NOC record.
+Edit compensation or shift fields.
+Validate inputs.
+Recalculate affected billing periods according to effective-date rules.
+Record sensitive change in audit trail.
+14.3 Configure Billing
+HR Manager opens Billing Configuration.
+Review current values.
+Edit settings.
+System validates values.
+Show change summary.
+Confirm save.
+Store new configuration and audit event.
+14.4 Master Data CSV
+Download template.
+Populate and upload.
+Validate.
+Show valid/failed rows.
+Confirm.
+Import valid rows.
+Return error file.
+Audit upload.
+14.5 Monthly Shift Allowance CSV
+Download template.
+Provide Employee ID, Billing Month and validated amount.
+Validate.
+Store monthly override.
+Use override in billing; otherwise use Shift Type fallback.
+14.6 Billing Report
+Select Billing Summary.
+Choose Billing Month/Year and filters.
+Retrieve applicable records and effective configuration.
+Calculate/retrieve results.
+Display employee values and aggregates.
+Export Excel or PDF.
+15. Security & Access Control
+Capability
+HR Manager
+HR Team Member
+GCC Lead
+View master data
+Yes
+Yes
+Yes
+Create/update master data
+Yes
+Yes
+No
+View compensation/billing
+Yes
+Yes
+Yes
+Update compensation
+Yes
+Yes
+No
+Edit Billing Configuration
+Yes
+No
+No
+Reports
+Yes
+Yes
+Yes
+User Administration
+Yes
+No
+No
+Audit Trail
+Yes
+As authorized
+No
+
+15.1 Sensitive Data
+The BRD identifies Aadhar, PAN, DOB, addresses and emergency contacts as sensitive. Protect them with encryption at rest, secure transport, masking in standard views and role-limited access.
+15.2 Audit Trail
+Compensation changes
+Billing Configuration changes
+Bulk uploads
+User/role changes
+Significant master-data updates
+16. Non-Functional Requirements
+Category
+Requirement
+Scale
+At least 2,000 employee/workforce records without material degradation.
+Performance
+Prompt common search, list, detail and report interactions under expected Phase 1 load.
+Security
+RBAC, encryption in transit/at rest, least privilege and protected sensitive data.
+Auditability
+Trace sensitive compensation/configuration changes.
+Maintainability
+Modular, configuration-driven billing rules.
+Extensibility
+Future HRMS/dashboard integration without redesigning core data.
+Accessibility
+WCAG AA expectations for supported workflows.
+Responsive
+Desktop, tablet and mobile support.
+Data Integrity
+UI + API validation and database constraints where practical.
+Recovery
+Backup/recovery targets to be agreed with infrastructure owner.
+Hosting
+Cloud/on-prem/internal decision remains open.
+
+17. Success Metrics
+Metric
+Definition
+Direction
+Excel dependency
+Workforce updates performed outside platform
+Decrease
+Mandatory completeness
+Active records meeting required-field rules
+Increase
+Validation failures
+Invalid records reaching master dataset
+Decrease
+Billing standardization
+Billing generated through standardized engine
+Increase
+Report preparation effort
+Manual effort to produce finance reports
+Decrease
+Historical retention
+Inactive records retained with context
+Increase
+Configuration governance
+Sensitive changes captured through authorized configuration
+Increase
+Upload success rate
+Valid rows successfully processed
+Increase
+
+18. Phase 2 & Future Roadmap
+18.1 Phase 2
+Interactive workforce/billing dashboards.
+Trend analysis and drill-down analytics.
+Leadership views.
+Potential report scheduling/distribution.
+18.2 Future Integration
+Central HRMS.
+Payroll/compensation systems where appropriate.
+SSO/enterprise identity provider.
+Automated synchronization of authoritative workforce attributes.
+API-driven ingestion and outbound reporting.
+19. Risks, Dependencies & Open Decisions
+Item
+Risk/Impact
+Response
+Joining Bonus
+Different amortization interpretation
+Resolved: three-month amortization; establish billing-month start rule in implementation
+Variable Pay
+Circular calculation risk
+Resolved: Flat % uses monthly Fixed Salary
+Shift Allowance
+Depends on PMO validated data
+Monthly upload + Shift Type fallback
+Commercial rates
+Exposure or hardcoding risk
+Protected Billing Configuration; no values in PRD
+Compressed UAT
+Reduced validation time
+Prioritize billing, CSV and report reconciliation tests
+Hosting
+Infrastructure controls depend on decision
+Cloud/on-prem/internal remains open
+Brand fonts/assets
+Exact brand match depends on approved assets/licensing
+Confirm official asset package and font fallback
+Configuration history
+Historical billing may be hard to reproduce
+Use effective-dated/versioned configuration where feasible
+
+20. Acceptance Criteria Summary
+Authorized users can maintain Phase 1 workforce records without Excel.
+Mandatory fields vary correctly by Engagement Type.
+Engagement Type and Employment Category remain separate.
+Controlled values cannot be silently created through CSV.
+CSV supports partial success and row-level errors.
+Monthly Shift Allowance Upload supports Employee ID, Billing Month and validated amount.
+GCC/NOC billing produces monthly Salary Cost and Fully Loaded Cost using configuration.
+Variable Pay supports None, Flat % and Custom Amount.
+Flat % is based on monthly Fixed Salary.
+Joining Bonus is amortized across three billing months.
+Rebadge/Colocation billing contains Facility + User Bundle and no salary.
+Non-GCC Fixed Bid has no platform billing calculation.
+HR Manager can update Billing Configuration without deployment.
+Sensitive configuration changes are auditable.
+Reports support required filters and Excel/PDF outputs.
+Sensitive PII is protected and masked according to authorization.
+At least 2,000 records are supported without material degradation.
+Architecture remains suitable for future dashboards and HRMS integration.
+21. Glossary
+Term
+Definition
+GCC
+Global Capability Center workforce population.
+NOC
+NOC/operations workforce population represented in the BRD.
+Rebadge
+Engagement population billed for facility and user bundle without salary calculation.
+Colocation
+Engagement population billed for facility and user bundle without salary calculation.
+Non-GCC Fixed Bid
+Population maintained in master data but billed outside the platform.
+Fixed CTC
+Annual fixed compensation amount in INR for applicable GCC/NOC records.
+Variable Pay Mode
+None, Flat % or Custom Amount.
+Fully Loaded Cost
+Salary/cost measure including applicable configured components.
+FX Rate
+Configured INR-to-USD conversion rate.
+Shift Type
+Controlled shift classification used for default allowance.
+PMO
+Project Management Office providing validated monthly shift allowance.
+RBAC
+Role-Based Access Control.
+
+22. Appendix — Billing Reference
+Rule
+Formula / Behavior
+Monthly Fixed Salary
+Fixed CTC ÷ 12
+Variable Pay — None
+0
+Variable Pay — Flat %
+Monthly Fixed Salary × Variable Pay %
+Variable Pay — Custom
+Configured custom amount
+Salary Cost
+(Monthly Fixed Salary ÷ FX Rate) + Variable Pay Amount (USD)
+Operational Margin Amount
+Salary Cost × Operational Margin %
+Joining Bonus Component
+Joining Bonus ÷ 3 for three billing months
+GCC/NOC Fully Loaded Cost
+Salary Cost + Margin + Facility + Bundle + Shift Allowance + Joining Bonus Component
+Rebadge/Colocation
+Facility + User Bundle
+
+22.1 Recommended Test Scenarios
+Scenario
+Expected Result
+GCC + None variable pay
+No variable pay; applicable cost components included
+GCC + Flat %
+Variable pay = monthly fixed salary × configured %
+GCC + Custom Amount
+Configured custom amount included using agreed currency conversion
+Rebadge / Colocation
+Facility + User Bundle only
+Non-GCC Fixed Bid
+No platform billing calculation
+PMO allowance exists
+Validated monthly amount overrides default Shift Type rate
+No PMO allowance
+Shift Type default rate is used
+Joining Bonus month 1/2/3
+One-third component included
+Joining Bonus month 4
+No joining bonus component
+Invalid CSV row
+Rejected with row-level error; valid rows may import
+New dropdown value in CSV
+Rejected until added through authorized UI
+HR Team Member billing config
+Edit control unavailable
+GCC Lead edit
+Edit control unavailable
+Sensitive PII view
+Value masked according to authorization
+
+Implementation noteThis PRD preserves open organizational decisions from the BRD rather than inventing unsupported requirements. The confirmed decisions are: Joining Bonus = three-month amortization; Variable Pay = None/Flat %/Custom Amount with Flat % based on monthly Fixed Salary; recommended architecture stack included. Actual billing rates remain outside this document.

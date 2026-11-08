@@ -1,0 +1,297 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Role {
+  id          String    @id @default(uuid())
+  code        String    @unique // HR_MANAGER, HR_TEAM_MEMBER, GCC_LEAD
+  name        String
+  description String?
+  users       AppUser[]
+}
+
+model AppUser {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  displayName  String
+  roleId       String
+  role         Role      @relation(fields: [roleId], references: [id])
+  status       String    @default("ACTIVE") // ACTIVE, INACTIVE
+  passwordHash String
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model DomainLead {
+  id        String     @id @default(uuid())
+  name      String     @unique
+  active    Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  employees Employee[]
+}
+
+model Source {
+  id        String     @id @default(uuid())
+  name      String     @unique
+  active    Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  employees Employee[]
+}
+
+model ShiftType {
+  id          String     @id @default(uuid())
+  code        String     @unique // GENERAL, US_SHIFT, UK_SHIFT, NOC_24X7
+  name        String
+  startTime   String?    @default("09:00") // e.g. "09:00", "21:00"
+  endTime     String?    @default("18:00") // e.g. "18:00", "06:00"
+  timezone    String?    @default("IST (UTC+5:30)")
+  description String?
+  defaultRate Float      @default(0) // Default monthly rate in USD
+  active      Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  employees   Employee[]
+}
+
+model LookupValue {
+  id         String   @id @default(uuid())
+  lookupType String
+  code       String
+  label      String
+  active     Boolean  @default(true)
+  sortOrder  Int      @default(0)
+  createdAt  DateTime @default(now())
+}
+
+model Employee {
+  id                 String   @id @default(uuid())
+  employeeId         String?  @unique // Business ID e.g. IN01806555
+  employeeName       String
+  oraclePersonNumber String?
+  assignmentStatus   String   @default("Active") // Active, Inactive, On Leave, Resigned
+  gender             String
+  engagementType     String   // GCC, NOC, Rebadge, Colocation, Non-GCC
+  employmentCategory String?  // Full Time, Individual Consultant, C2C Consultant, Rebadge, Colocation
+  gccPresence        Boolean  @default(true)
+  hgvRole            String
+  hgvDepartment      String?
+  domainLeadId       String
+  domainLead         DomainLead @relation(fields: [domainLeadId], references: [id])
+  reportingManager   String?
+  businessUnit       String?
+  practice           String?
+  subPractice        String?
+  gradeLevel         String?
+  employeeGroup      String?
+  project            String?  // Required for Non-GCC
+  sourceId           String
+  source             Source     @relation(fields: [sourceId], references: [id])
+  subSource          String?
+  dateOfJoining      DateTime?
+  hgvStartDate       DateTime?
+  hgvEndDate         DateTime?
+  shiftTypeId        String?
+  shiftType          ShiftType? @relation(fields: [shiftTypeId], references: [id])
+  noticePeriod       String?
+  skills             String?
+  bgvStatus          String?    @default("Passed")
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+
+  // Related
+  compensations      EmployeeCompensation[]
+  contact            EmployeeContact?
+  address            EmployeeAddress?
+  attritions         EmployeeAttrition[]
+  documents          EmployeeDocument[]
+  shiftOverrides     ShiftAllowanceOverride[]
+  billingResults     BillingResult[]
+}
+
+model EmployeeCompensation {
+  id                          String    @id @default(uuid())
+  employeeId                  String
+  employee                    Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  effectiveFrom               DateTime  @default(now())
+  effectiveTo                 DateTime?
+  fixedCtcInrAnnual           Float     @default(0)
+  variablePayMode             String    @default("NONE") // NONE, FLAT_PERCENT, CUSTOM_AMOUNT
+  variablePayPercent          Float?    // e.g. 5.0 for 5%
+  variablePayCustomInrMonthly Float?
+  joiningBonusInr             Float?    @default(0)
+  createdAt                   DateTime  @default(now())
+  updatedAt                   DateTime  @updatedAt
+}
+
+model EmployeeContact {
+  id                   String    @id @default(uuid())
+  employeeId           String    @unique
+  employee             Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  personalEmail        String?
+  hgvEmail             String?
+  mtEmail              String?
+  mobile               String?
+  emergencyContactName String?
+  emergencyContactPhone String?
+  spouseName           String?
+  guardianName         String?
+  qualification        String?
+  dob                  DateTime?
+  bloodGroup           String?
+  maritalStatus        String?
+}
+
+model EmployeeAddress {
+  id               String   @id @default(uuid())
+  employeeId       String   @unique
+  employee         Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  currentAddress   String?
+  permanentAddress String?
+  baseLocation     String?
+}
+
+model EmployeeAttrition {
+  id              String   @id @default(uuid())
+  employeeId      String
+  employee        Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  attritionReason String
+  attritionDate   DateTime @default(now())
+  notes           String?
+  createdAt       DateTime @default(now())
+}
+
+model EmployeeDocument {
+  id             String   @id @default(uuid())
+  employeeId     String
+  employee       Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  documentType   String   // PAN, Aadhar, Passport, Offer Letter, etc.
+  documentNumber String
+  fileName       String?
+  fileSize       Int?
+  mimeType       String?
+  status         String   @default("Verified")
+  createdAt      DateTime @default(now())
+}
+
+model BillingConfiguration {
+  id                       String    @id @default(uuid())
+  versionNumber            Int       @default(1)
+  effectiveFrom            DateTime  @default(now())
+  effectiveTo              DateTime?
+  fxRateInrUsd             Float     @default(90.0)
+  variablePayRatePercent   Float     @default(5.0)
+  operationalMarginPercent Float     @default(30.0)
+  facilityCostUsdMonthly   Float     @default(500.0) // $6,000 annual
+  userBundleCostUsdMonthly Float     @default(0.0)
+  shiftAllowanceGeneralUsd Float     @default(0.0)
+  shiftAllowanceUsShiftUsd Float     @default(200.0)
+  shiftAllowanceUkShiftUsd Float     @default(150.0)
+  shiftAllowance24x7NocUsd Float     @default(250.0)
+  isCurrent                Boolean   @default(true)
+  createdBy                String?
+  createdAt                DateTime  @default(now())
+}
+
+model ShiftAllowanceOverride {
+  id                 String   @id @default(uuid())
+  employeeId         String
+  employee           Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  billingMonth       String   // "YYYY-MM" e.g. "2026-08"
+  validatedAmountUsd Float
+  validationStatus   String   @default("VALIDATED") // VALIDATED, REJECTED
+  sourceBatchId      String?
+  validatedBy        String?
+  createdAt          DateTime @default(now())
+
+  @@unique([employeeId, billingMonth])
+}
+
+model BillingResult {
+  id                         String    @id @default(uuid())
+  employeeId                 String
+  employee                   Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  billingMonth               String    // "YYYY-MM"
+  engagementType             String
+  configurationVersion       Int
+  fixedCtcInrAnnual          Float     @default(0)
+  monthlyFixedSalaryInr      Float     @default(0)
+  variablePayMode            String    @default("NONE")
+  variablePayAmountInr       Float     @default(0)
+  variablePayAmountUsd       Float     @default(0)
+  fxRateInrUsd               Float     @default(90.0)
+  salaryCostUsd              Float     @default(0)
+  operationalMarginAmountUsd Float     @default(0)
+  facilityCostUsd            Float     @default(0)
+  userBundleCostUsd          Float     @default(0)
+  shiftAllowanceUsd          Float     @default(0)
+  shiftAllowanceSource       String    @default("SHIFT_TYPE_DEFAULT") // PMO_OVERRIDE, SHIFT_TYPE_DEFAULT
+  joiningBonusComponentUsd   Float     @default(0)
+  joiningBonusMonthIndex     Int?      // 1, 2, 3, or >=4
+  fullyLoadedCostUsd         Float     @default(0)
+  annualFullyLoadedCostUsd   Float     @default(0)
+  billingStatus              String    @default("CALCULATED") // CALCULATED, NOT_APPLICABLE, ERROR
+  calculationVersion         String    @default("v1.0")
+  calculatedAt               DateTime  @default(now())
+
+  components                 BillingResultComponent[]
+
+  @@unique([employeeId, billingMonth])
+}
+
+model BillingResultComponent {
+  id              String        @id @default(uuid())
+  billingResultId String
+  billingResult   BillingResult @relation(fields: [billingResultId], references: [id], onDelete: Cascade)
+  componentType   String        // SALARY, MARGIN, FACILITY, BUNDLE, SHIFT, BONUS
+  sourceType      String        // FIXED, VARIABLE, CONFIG, OVERRIDE
+  amountUsd       Float
+  rateValue       Float?
+  description     String?
+  createdAt       DateTime      @default(now())
+}
+
+model ImportBatch {
+  id          String            @id @default(uuid())
+  uploadType  String            // MASTER_DATA, SHIFT_ALLOWANCE
+  fileName    String
+  status      String            @default("QUEUED") // QUEUED, VALIDATING, IMPORTING, COMPLETED, COMPLETED_WITH_ERRORS, FAILED
+  totalRows   Int               @default(0)
+  validRows   Int               @default(0)
+  failedRows  Int               @default(0)
+  uploadedBy  String?
+  startedAt   DateTime          @default(now())
+  completedAt DateTime?
+  rowErrors   ImportRowError[]
+}
+
+model ImportRowError {
+  id            String      @id @default(uuid())
+  importBatchId String
+  importBatch   ImportBatch @relation(fields: [importBatchId], references: [id], onDelete: Cascade)
+  rowNumber     Int
+  columnName    String?
+  errorCode     String
+  errorMessage  String
+  rawValue      String?
+}
+
+model AuditEvent {
+  id          String   @id @default(uuid())
+  occurredAt  DateTime @default(now())
+  actorEmail  String
+  actorRole   String
+  action      String   // CREATE, UPDATE, DEACTIVATE, UPLOAD, CONFIG_CHANGE, LOGIN, EXPORT
+  entityType  String   // EMPLOYEE, COMPENSATION, BILLING_CONFIG, UPLOAD, USER
+  entityId    String?
+  description String
+  beforeJson  String?
+  afterJson   String?
+}

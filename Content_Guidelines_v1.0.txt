@@ -1,0 +1,646 @@
+HGV
+GCC Workforce Master Data & Billing Platform
+Content Guidelines & Design System
+Version 1.0 | March 2026 | Build Reference
+
+This document is the content, UI language, and interaction-writing reference for the HGV GCC Workforce Master Data & Billing Platform. It translates the approved workforce, compensation, billing, upload, reporting, and role-access requirements into consistent product language.
+
+Document principle
+Rule
+Source of truth
+Business terminology and workflow rules follow the HGV workforce/billing requirements; sample documents are used only as structural references.
+People first
+Use respectful, clear language for employee and workforce data. Avoid language that feels transactional or punitive.
+Operational clarity
+Every label, action, status, and validation message should make the next step obvious.
+Financial precision
+Billing, compensation, and configuration language must distinguish inputs, calculated values, overrides, and external billing.
+Role awareness
+Content must not imply actions a user role cannot perform.
+
+1. Content Principles
+Principle
+Implementation rule
+Clarity first
+Show the information needed for the current task. Prefer plain labels and short helper text over dense explanations.
+People first
+Use 'employee', 'employee record', and 'workforce' consistently. Avoid unnecessary jargon or language that reduces people to billing units.
+Single source of truth
+Use consistent master-data names across forms, tables, uploads, reports, and billing views.
+Financial transparency
+Clearly separate configured rates, employee inputs, calculated billing components, overrides, and totals.
+Controlled change
+Explain when a value is admin-controlled, role-restricted, historical, or overridden.
+Auditability
+For consequential actions, communicate what changed, when, and by whom.
+Consistency
+The same field or status must have the same label and meaning everywhere.
+Accessible by default
+Use sentence case, descriptive labels, visible focus states, and text that remains understandable without colour.
+
+Do not introduce decorative copy that competes with workforce data, compensation figures, billing values, or operational actions.
+2. HGV Product Voice
+The product voice should feel professional, calm, human, precise, and operationally confident. HGV brand language should communicate seamless simplicity, people first, heartfelt hospitality, and elevated experiences without becoming promotional inside an internal workforce application.
+Voice trait
+Use
+Avoid
+Clear
+“Add employee”, “Upload master data”, “Billing month”
+“Let’s get started on your amazing journey”
+Human
+“Employee record”, “Contact details”, “Assignment status”
+“Resource”, “Headcount unit” when employee is meant
+Precise
+“3-month amortized joining bonus”
+“Bonus spread over time”
+Calm
+“Upload completed with 12 successful rows and 2 errors.”
+“Great! You crushed the upload!”
+Neutral
+“Billing calculated outside platform.”
+“No billing available here.”
+Actionable
+“Review errors”, “Download template”, “Save configuration”
+“Continue” when the actual action is more specific
+
+3. Terminology & Naming
+Preferred term
+Definition / usage
+Employee
+A person represented in the workforce master data.
+Employee ID
+Unique employee identifier used for workforce and monthly billing/shift records.
+Assignment Status
+The employee's current assignment state in the workforce master data.
+Employment Category
+Full Time, Individual Consultant, C2C Consultant, Rebadge, or Colocation.
+Engagement Type
+GCC, NOC, Rebadge, Colocation, or Non-GCC.
+GCC Presence
+Yes/No indicator of GCC presence.
+Fixed CTC
+Annual fixed compensation amount in INR.
+Variable Pay
+Variable compensation represented as None, Flat %, or Custom Amount.
+Joining Bonus
+Configured bonus amount amortized across the first three billing months.
+Shift Type
+Configured shift category used to determine the default shift allowance.
+PMO validated shift allowance
+Monthly employee-specific allowance that overrides the Shift Type default when supplied.
+Billing Month
+The month for which billing is calculated or reported.
+Billing Configuration
+Admin-managed rates and parameters used by the billing engine.
+Historical / Inactive
+A retained record that is no longer active but remains available for historical reporting.
+Non-GCC Fixed Bid
+Engagement where billing is handled outside the platform rather than calculated by the platform.
+
+Use 'Engagement Type' and 'Employment Category' as separate concepts. Never relabel one as the other.
+4. Content Hierarchy
+Level
+Content pattern
+Example
+Page title
+What the page is for
+Workforce
+Page description
+One-sentence purpose
+View and manage workforce master data and compensation details.
+Section heading
+A meaningful grouping
+Compensation
+Field label
+Business term, sentence case
+Fixed CTC
+Helper text
+Short instruction or rule
+Required for GCC and NOC engagements.
+Value/status
+Exact controlled value
+Active
+Primary action
+Specific outcome
+Save employee
+Secondary action
+Supporting action
+Cancel
+Destructive action
+Specific irreversible outcome
+Deactivate employee
+Confirmation
+Action + consequence
+Deactivate this employee?
+
+5. Global Content Rules
+Use sentence case throughout the application.
+Do not use all-caps labels, promotional slogans, or unexplained abbreviations.
+Use 'Add new' for creating a new controlled master value; do not use 'Create' for dropdown values unless the UI creates a full record.
+Use 'Save' when changes persist to the current record; use 'Upload' for file ingestion; use 'Export' for report generation.
+Use exact field names from the master-data model in tables and reports.
+Keep helper text to one or two short sentences.
+Use explicit units: INR, USD, %, annual, monthly, and billing month.
+Dates should be displayed in a consistent human-readable format while preserving an unambiguous underlying date value.
+Do not expose masked sensitive data in standard views.
+Never hide an error only through colour; pair status colour with text and/or an icon.
+6. Brand & Visual Language
+Element
+HGV direction
+Primary navy
+#202B46 — primary brand/action anchor and major headings.
+White
+#FFFFFF — primary surfaces and clean space.
+Sky blue
+#C5DBEF — light informational surfaces and selected states.
+Yellow
+#FFECAE — attention/highlight surfaces where appropriate.
+Coral
+#E73C3E — destructive/error emphasis.
+Teal
+#00B0B9 — supportive accent and selected product moments.
+Sand
+#F5F1EB — warm secondary background/surface.
+Light gray
+#F1F1F1 — neutral background and structural separation.
+Typography
+Hilton Serif for headings where licensed; Hilton Sans for navigation, forms, tables, and body copy. Use approved fallbacks if brand fonts are unavailable.
+Shape
+Clean enterprise panels with restrained rounding and subtle shadows; avoid excessive visual decoration.
+Density
+Spacious, readable layouts with strong table/form hierarchy.
+
+Brand assets and font licensing should be confirmed against the official HGV brand asset package before production implementation.
+7. Colour & Status Semantics
+Meaning
+Suggested HGV treatment
+Content rule
+Success / active
+Teal or approved success green
+Use for saved, active, completed, and successfully processed states.
+Warning / attention
+Yellow / amber treatment
+Use for pending validation, incomplete setup, or attention required.
+Error / destructive
+Coral
+Use for validation errors, failed processing, delete/deactivate actions, and blocking issues.
+Information
+Sky blue
+Use for neutral guidance, explanatory callouts, and non-blocking system information.
+Neutral / historical
+Light gray
+Use for inactive, archived, historical, or not-applicable states.
+
+Status colour is semantic, not decorative. The label must carry the meaning even if colour is unavailable.
+8. Navigation & Shell Content
+Area
+Recommended copy
+Dashboard
+Dashboard — Workforce and billing overview.
+Workforce
+Workforce — Search, view, add, and update employee records.
+Bulk Upload
+Bulk upload — Import master data or monthly shift allowance files.
+Reports
+Reports — Export workforce, billing, and headcount information.
+Billing Configuration
+Billing configuration — Manage rates and billing parameters.
+User Administration
+User administration — Manage application users and roles.
+Audit Trail
+Audit trail — Review changes to workforce, compensation, billing configuration, uploads, and users.
+Account
+Account — View account information and application preferences.
+
+Navigation visibility follows role permissions. Do not display edit-oriented navigation to roles that cannot perform those actions.
+9. Dashboard Content
+Component
+Content guidance
+Page title
+Dashboard
+Intro
+Workforce, compensation, billing, and operational activity at a glance.
+KPI card
+Use a short metric label and a single current value.
+Workforce snapshot
+Active employees, engagement mix, assignment status, and recent changes.
+Billing snapshot
+Billing month, total calculated billing, and key component totals where permitted.
+Upload activity
+Recent uploads with status: Processing, Completed, Completed with errors, or Failed.
+Attention panel
+Show actionable exceptions such as validation failures or missing monthly shift allowance data.
+Quick actions
+Add employee, upload master data, upload shift allowance, view reports.
+
+10. Workforce Master Data Content
+10.1 Employee form
+The form should group fields by business purpose rather than presenting one long undifferentiated list.
+Section
+Fields / content
+Identity & employment
+Employee Name, Employee ID, Assignment Status, Gender, Employment Category, Engagement Type.
+Organisation
+HGV Role, HGV Department, Domain Lead, Project, Source.
+Engagement
+GCC Presence, Shift Type.
+Dates
+HGV Start Date and other approved date fields.
+Compensation
+Fixed CTC, Variable Pay mode/value, Joining Bonus where applicable.
+Personal & contact
+Approved personal/contact/address fields from the master-data model, with sensitive fields protected.
+Documents / compliance
+Approved document and compliance fields from the master-data model.
+
+10.2 Dynamic field guidance
+Mandatory fields must change based on Engagement Type. The UI should explain why a field is required rather than showing unexplained validation.
+Scenario
+Content behaviour
+GCC / NOC
+Employee ID, Employment Category, Fixed CTC, Variable Pay, Joining Bonus, and Shift Type are required where defined by the requirements.
+Rebadge / Colocation
+Shift Type is required; salary-based billing fields are not used for billing.
+Non-GCC
+Employee ID, Employment Category, and Project are required; platform billing is not calculated.
+Controlled dropdown
+Use searchable selection plus Add new where supported. Do not silently create new master values from CSV.
+
+11. Compensation Content
+Element
+UI language
+Fixed CTC
+Fixed CTC (annual, INR)
+Variable Pay
+Variable Pay
+Mode
+None / Flat % / Custom Amount
+Flat % helper
+Calculated on monthly fixed salary.
+Custom Amount helper
+Enter the configured/custom monthly amount as applicable.
+Joining Bonus
+Joining Bonus
+Amortization helper
+Amortized equally across the first 3 billing months.
+Month 1
+1/3 of joining bonus
+Month 2
+1/3 of joining bonus
+Month 3
+1/3 of joining bonus
+Month 4 onward
+No joining bonus component
+
+12. Billing Content & Calculation Transparency
+Billing views should distinguish source inputs, configured rates, calculated components, overrides, and the final billing figure. Avoid presenting a single unexplained total.
+Component
+Display guidance
+Salary Cost
+Show the calculated amount and, where useful, the underlying FX and variable-pay treatment.
+Operational Margin
+Show configured margin contribution where the user's role is permitted to view it.
+Facility Cost
+Show the configured facility component.
+User Bundle Cost
+Show the configured user bundle component.
+Shift Allowance
+Show Shift Type default and identify a PMO validated monthly override when one is applied.
+Joining Bonus component
+Show the applicable 1/3 monthly amortized component during months 1–3.
+Fully Loaded Cost
+Show as the aggregate of applicable billing components.
+Non-GCC Fixed Bid
+Display: “Billing calculated outside platform.”
+
+Configured billing values are intentionally not hard-coded in content. The UI should always display the current configured value applicable to the billing period.
+13. Billing Configuration Content
+Setting
+Label / helper copy
+FX Rate
+INR to USD FX Rate
+Variable Pay
+Variable Pay Rate (Flat %)
+Margin
+Operational Margin (%)
+Facility
+Facility Cost (USD)
+User bundle
+User Bundle Cost (USD)
+Shift allowance
+Shift Allowance Rate by Shift Type (USD)
+Save
+Save billing configuration
+History
+Configuration changes are recorded in the audit trail.
+
+Billing Configuration is an HR Manager-only edit area. Other roles may have read-only visibility only where permitted by the requirements. Changes should clearly state the effective value and timestamp.
+14. Bulk Upload Content
+Upload type
+Primary copy
+Master Data Upload
+Upload workforce master data to create or update employee records.
+Shift Allowance Upload
+Upload monthly PMO-validated shift allowance values.
+Template
+Download CSV template
+Validation
+Validate file
+Import
+Import valid rows
+Partial success
+Valid rows are imported; failed rows remain in the error report.
+Error report
+Download row-level errors
+Controlled values
+New dropdown values must be added through Add new, not introduced silently by CSV.
+
+Upload status language
+State
+Recommended message
+Processing
+Your file is being validated and processed.
+Completed
+Upload completed successfully.
+Completed with errors
+Upload completed with some rows rejected. Review the error report.
+Failed
+The upload could not be completed. Review the error details and try again.
+
+15. Reports & Export Content
+Report
+Purpose / description
+Master Data Export
+Exports workforce master data using the selected filters and permitted fields.
+Billing Summary
+Monthly billing at employee level with aggregates by Domain Lead and Engagement Type.
+Headcount Summary
+Summarises workforce counts using the selected filters.
+Formats
+Excel and PDF.
+Filters
+Engagement Type, Domain Lead, Billing Month/Year, Assignment Status.
+Export confirmation
+Your report is being generated. Download will begin when it is ready.
+
+Report content must preserve the distinction between calculated platform billing and Non-GCC Fixed Bid engagements billed outside the platform.
+16. Roles & Permission-Aware Copy
+Role
+Content implication
+HR Manager
+Can manage workforce data, compensation, billing configuration, reports, and user administration.
+HR Team Member
+Can manage workforce master data and compensation and access reports; cannot edit Billing Configuration.
+GCC Lead
+Read-only access to workforce and compensation/billing figures and reports; no edit or configuration actions.
+
+Do not use generic action labels such as 'Manage' where the user can only view. Use 'View', 'Edit', or 'Configure' according to actual permission.
+17. Validation & Error Messages
+Situation
+Message pattern
+Required field
+[Field name] is required.
+Invalid date
+Enter a valid date.
+Invalid number
+Enter a valid amount.
+Invalid controlled value
+Select a value from the available options.
+CSV missing column
+The file is missing the required column: [Column name].
+CSV row error
+Row [number]: [specific issue].
+Duplicate employee ID
+Employee ID already exists. Review the existing record or use the update flow.
+Permission
+You do not have permission to perform this action.
+Billing config save
+Billing configuration saved successfully.
+Calculation exception
+Billing could not be calculated for this record. Review the highlighted inputs.
+
+Errors should identify the object, problem, and next action. Avoid blame-oriented language such as 'You entered the wrong data.'
+18. Empty, Loading & Success States
+State
+Recommended content
+No workforce records
+No employee records found. Adjust your filters or add an employee.
+No reports
+No report data matches the selected filters.
+No upload history
+No uploads have been processed yet.
+No audit activity
+No audit events match the selected filters.
+Loading
+Loading workforce data…
+Saving
+Saving changes…
+Success
+Employee record saved successfully.
+Exporting
+Preparing your report…
+No billing
+Billing is not calculated for this engagement type.
+
+19. Confirmation & Destructive Actions
+Action
+Confirmation copy
+Deactivate employee
+Deactivate this employee record? The record will remain available as historical/inactive data.
+Delete upload result
+Remove this upload record? This action affects upload history.
+Change billing config
+Save these billing configuration changes? The new values will be used according to the platform's effective configuration rules.
+Remove user access
+Remove access for this user? They will no longer be able to sign in with their current role.
+
+Use a specific action title. Explain the consequence and whether the action is reversible. Destructive actions require explicit confirmation.
+20. Audit Trail Content
+Event category
+Example event
+Workforce
+Employee record updated.
+Compensation
+Compensation value changed.
+Billing configuration
+Billing configuration updated.
+Bulk upload
+Master data upload completed with errors.
+User administration
+User role changed.
+Access
+User access updated.
+System
+Report generated.
+
+Audit entries should expose timestamp, actor, event type, target record where appropriate, and a concise description of the change. Sensitive values should not be unnecessarily repeated in the audit message.
+21. Accessibility Content Rules
+Never rely on colour alone to communicate active, warning, error, or permission states.
+Form labels must describe the field without relying on placeholder text.
+Required fields use a visible asterisk plus accessible required semantics.
+Validation messages must be adjacent to the relevant field and understandable by screen readers.
+Icon-only actions require accessible names/tooltips.
+Use meaningful button labels such as 'Download error report' instead of 'Download' where context is ambiguous.
+Tables must preserve readable headers and logical row/column relationships.
+Masked PII must remain understandable to authorised users without exposing the underlying value.
+22. Responsive & Content Density
+Viewport
+Content rule
+Desktop
+Use full table/filter layouts with clear grouping and persistent navigation.
+Tablet
+Allow horizontal table scrolling where needed; keep key actions visible.
+Mobile
+Stack form sections, prioritise primary actions, and avoid hiding essential status information.
+Long values
+Wrap or truncate with a clear full-value affordance where appropriate.
+Tables
+Prioritise Employee ID, Employee Name, Engagement Type, Assignment Status, and key billing fields according to page purpose.
+
+23. Notifications & Toasts
+Type
+Example
+Success
+Master data upload completed successfully.
+Info
+Billing is calculated using the current billing configuration.
+Warning
+This record has incomplete data required for billing.
+Error
+The file could not be processed. Review the errors and try again.
+
+Toast messages should be concise. Persistent or consequential errors belong in the page content as well as the toast.
+24. Search, Filters & Table Copy
+Element
+Copy
+Global search placeholder
+Search employees, employee IDs, domain leads…
+Employee search
+Search by employee name or Employee ID.
+Filter action
+Filters
+Clear
+Clear filters
+Apply
+Apply filters
+Results count
+[N] employees
+Sort
+Sort by [field]
+Pagination
+Previous / Next
+No results
+No employees match the selected filters.
+
+Search and filter language should describe what is actually searchable. Do not promise fields that are not indexed or supported.
+25. Account & User Administration Content
+Area
+Recommended copy
+User creation
+Add user
+Role
+Role
+Status
+User status
+Access
+Application access
+Role helper
+Permissions are applied based on the selected role.
+Deactivate
+Deactivate user access
+Reset password
+Send password reset
+Profile
+Account information
+
+Avoid exposing permissions as a long technical matrix in the primary UI. Use concise role descriptions and provide detailed permissions where an admin needs them.
+26. Microcopy Library
+Context
+Recommended copy
+Add record
+Add employee
+Edit
+Edit employee
+View
+View employee
+Billing
+View billing
+Save
+Save changes
+Cancel
+Cancel
+Back
+Back to workforce
+Upload
+Upload file
+Download template
+Download CSV template
+Retry
+Try again
+Review errors
+Review errors
+Export
+Export report
+Configure
+Edit billing configuration
+Read-only
+Read-only
+Historical
+Historical record
+Masked
+Sensitive information masked
+
+27. Screen-by-Screen Content Checklist
+Screen
+Required content checks
+Login
+HGV product name, sign-in fields, clear validation, password recovery.
+Dashboard
+Workforce/billing KPIs, attention states, recent activity, role-appropriate actions.
+Workforce list
+Search, filters, table, status, role-aware actions, empty/loading/error states.
+Employee create/edit
+Dynamic mandatory fields, grouped sections, validation, save/cancel.
+Employee detail
+Master data, compensation, billing, history/audit where permitted.
+Billing view
+Applicable billing components, configuration context, overrides, external-billing state.
+Billing configuration
+Admin-only edit controls, units, save confirmation, audit visibility.
+Bulk upload
+Upload type, template, validation, progress, partial success, row-level errors.
+Reports
+Report type, filters, export format, progress, success/error states.
+User administration
+Users, roles, status, access actions.
+Audit trail
+Filters, actor, timestamp, event, target, details.
+Account
+User information and account actions.
+
+28. Confirmed Business Decisions to Preserve in UI Content
+Joining Bonus is amortized equally across three billing months: Month 1, Month 2, and Month 3; Month 4 onward is zero.
+Variable Pay supports None, Flat %, and Custom Amount. Flat % is calculated on monthly fixed salary.
+Billing is calculated for GCC and NOC using salary, applicable margin, facility, user bundle, shift allowance, and joining-bonus components.
+Rebadge and Colocation billing uses facility and user bundle components; salary and shift allowance are not used for billing.
+Non-GCC Fixed Bid is billed outside the platform.
+PMO validated monthly shift allowance can override the Shift Type default for an Employee ID and Billing Month.
+New controlled dropdown values are introduced through Add new rather than silently through CSV.
+Partial-success uploads are supported: valid rows import while invalid rows are reported with row-level errors.
+Sensitive PII is protected and masked in standard views.
+Billing configuration is admin-managed and should not require deployment for rate changes.
+29. Content QA Checklist
+Every page uses the same business term for the same field.
+Every primary action describes the actual outcome.
+Every required field has a clear label and validation message.
+Role-restricted actions are hidden or disabled with an understandable explanation.
+Billing figures identify applicable components and overrides.
+Joining bonus copy consistently states 3-month amortization.
+Variable Pay copy consistently states the selected mode and calculation basis.
+Non-GCC Fixed Bid records clearly state that billing is calculated outside the platform.
+Upload errors identify row and field where possible.
+Sensitive data is not exposed in standard views or unnecessary messages.
+Empty, loading, success, warning, and error states are defined for each major workflow.
+Exports use the same field names and meanings as the application.
+Content remains understandable when colour is removed.
+Brand language is professional and human without promotional copy inside operational workflows.

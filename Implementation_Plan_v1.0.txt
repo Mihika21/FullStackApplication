@@ -1,0 +1,388 @@
+HGV GCC Workforce Master Data & Billing Platform
+Implementation Plan
+Step-by-step build sequence from environment setup to production deploymentVersion 1.0 | September 2026
+This implementation plan converts the approved HGV requirements into an execution sequence. The uploaded ProcureMaster implementation plan was used as the structural reference for phased delivery, task lists and verification checklists. fileciteturn8file0L22-L31
+Implementation Principles
+Principle
+Rule
+Phased delivery
+Complete and verify each phase before starting the next.
+Source of truth
+BRD business rules and approved HGV PRD/App Flow/Tech Stack/Backend Schema govern implementation.
+Decision policy
+Do not invent undocumented product, schema, security or architecture decisions.
+Security first
+Protect compensation, billing configuration and sensitive PII from the start.
+Auditability
+Track material workforce, compensation, billing configuration, import and access changes.
+Architecture
+Use the recommended modular-monolith approach for Phase 1; avoid premature microservices.
+
+Phase Summary
+Phase
+Scope
+Output
+0
+Environment & repository
+Working development environment
+1
+Application foundation & HGV design system
+Shared UI foundation and app shell
+2
+Database & backend foundation
+Verified PostgreSQL schema and backend connectivity
+3
+Authentication & RBAC
+Secure role-based access
+4
+Navigation & dashboard shell
+Role-aware navigation and dashboard
+5
+Workforce master data
+Employee lifecycle and dynamic validation
+6
+Compensation & billing
+Deterministic monthly billing engine
+7
+Bulk upload & shift allowance
+Validated CSV ingestion and overrides
+8
+Reports & exports
+Master data, billing and headcount reports
+9
+Configuration, users & audit
+Admin controls and governance
+10
+Error/security/accessibility polish
+Production-ready UX and controls
+11
+E2E testing & UAT
+Verified critical workflows
+12
+Production deployment
+Live system and handover
+
+PHASE 0 — Environment & Repository Setup
+Prepare the development machine, repository, environment variables and infrastructure prerequisites.
+Phase Tasks
+Create repository and establish branch/PR conventions.
+Install Node.js LTS, Git, Docker and required IDE tooling.
+Provision development PostgreSQL 16 and approved object storage.
+Create separate development, test/UAT and production configuration placeholders.
+Create .env.example and keep secrets outside source control.
+Create CI skeleton for install, lint, build and test.
+Record the selected hosting provider, region and data-residency decision when confirmed.
+Phase Output
+Completed environment & repository setup with verified implementation artifacts and no unresolved critical defects.
+Verification Checklist
+Local application can connect to development database.
+Secrets are not committed.
+CI completes baseline build.
+Environment separation is documented.
+Build note: Follow the approved HGV PRD, App Flow, Tech Stack and Backend Schema. If a material decision is undocumented, stop and request clarification.
+PHASE 1 — Application Foundation & HGV Design System
+Build the frontend foundation and reusable HGV visual system before feature screens.
+Phase Tasks
+Scaffold Next.js 14, React 18 and TypeScript.
+Configure Tailwind CSS and shadcn/ui.
+Implement HGV colors: Navy #202B46, White #FFFFFF, Sky Blue #C5DBEF, Yellow #FFECAE, Coral #E73C3E, Teal #00B0B9, Sand #F5F1EB and Light Gray #F1F1F1.
+Implement approved Hilton typography where licensed, with documented fallbacks.
+Create reusable form, table, modal, badge, toast, card, empty, loading and error components.
+Implement responsive desktop/tablet/mobile layouts.
+Implement accessibility foundations: labels, focus states, semantic controls and contrast-safe combinations.
+Phase Output
+Completed application foundation & hgv design system with verified implementation artifacts and no unresolved critical defects.
+Verification Checklist
+App starts without errors.
+Shared components render consistently.
+Responsive shell works.
+Colors use tokens rather than scattered hard-coded values.
+Build note: Follow the approved HGV PRD, App Flow, Tech Stack and Backend Schema. If a material decision is undocumented, stop and request clarification.
+PHASE 2 — Database & Backend Foundation
+Implement the PostgreSQL schema and backend service defined in the approved Backend Schema.
+Phase Tasks
+Create tables for users/roles, employee, domain lead, source, shift type, compensation, contact/address, attrition, documents, billing configuration, shift rates/overrides, billing results/components, imports/errors, reports, audit and notifications.
+Implement controlled ENUMs and constraints for engagement type, employment category, assignment status, variable pay and billing states.
+Implement foreign keys, indexes, unique constraints and historical/inactive patterns.
+Configure ASP.NET Core, EF Core and Npgsql.
+Seed only approved controlled values and required administrative data.
+Create transaction boundaries for workforce, compensation and billing updates.
+Phase Output
+Completed database & backend foundation with verified implementation artifacts and no unresolved critical defects.
+Verification Checklist
+All migrations apply cleanly.
+Constraints behave correctly.
+Employee search and billing/report dimensions are indexed.
+Backend can read/write a test employee.
+Build note: Follow the approved HGV PRD, App Flow, Tech Stack and Backend Schema. If a material decision is undocumented, stop and request clarification.
+PHASE 3 — Authentication & RBAC
+Secure access for HR Manager, HR Team Member and GCC Lead.
+Phase Tasks
+Implement secure authentication/session handling using the approved .NET stack.
+Implement server-side authorization policies.
+HR Manager: full master data, compensation, billing configuration, reports and user administration.
+HR Team Member: master data, compensation and reports; no Billing Configuration edit.
+GCC Lead: read-only master data and compensation/billing figures plus reports.
+Protect compensation and billing APIs against direct unauthorized requests.
+Test every role against protected endpoints.
+Phase Output
+Completed authentication & rbac with verified implementation artifacts and no unresolved critical defects.
+Verification Checklist
+All roles can authenticate.
+Unauthorized routes return an authorization failure.
+Restricted billing configuration operations are blocked.
+GCC Lead cannot modify workforce data.
+UI restrictions cannot be bypassed through APIs.
+Build note: Follow the approved HGV PRD, App Flow, Tech Stack and Backend Schema. If a material decision is undocumented, stop and request clarification.
+PHASE 4 — Navigation, Dashboard & Workforce Shell
+Create the role-aware application shell and entry points for all approved modules.
+Phase Tasks
+Build responsive sidebar/top navigation.
+Add Dashboard, Workforce, Bulk Upload and Reports.
+Show Billing Configuration and User Administration only to HR Manager.
+Add account/sign-out and global employee search entry point.
+Create dashboard cards for approved headcount, engagement and billing views.
+Implement breadcrumbs, filters, page headers and global loading/error/empty states.
+Phase Output
+Completed navigation, dashboard & workforce shell with verified implementation artifacts and no unresolved critical defects.
+Verification Checklist
+Navigation matches each role.
+Unauthorized menu items are inaccessible.
+Dashboard loads reliably.
+Responsive navigation works on target devices.
+Build note: Follow the approved HGV PRD, App Flow, Tech Stack and Backend Schema. If a material decision is undocumented, stop and request clarification.
+PHASE 5 — Workforce Master Data
+Implement employee master-data lifecycle with dynamic mandatory fields.
+Phase Tasks
+Build Workforce list with search, filter, sort and pagination.
+Build Add/Edit Employee forms and detail view.
+Domain Lead and Source use searchable dropdowns with Add New.
+Engagement Type values: GCC, NOC, Rebadge, Colocation, Non-GCC.
+Employment Category values: Full Time, Individual Consultant, C2C Consultant, Rebadge, Colocation.
+Implement dynamic mandatory fields by Engagement Type.
+Retain inactive/historical attrition records.
+Mask sensitive PII in standard views.
+Audit material workforce changes.
+Phase Output
+Completed workforce master data with verified implementation artifacts and no unresolved critical defects.
+Verification Checklist
+Mandatory fields change correctly by engagement type.
+Employee ID is required for GCC/NOC/Non-GCC.
+Project is required for Non-GCC.
+Fixed CTC, Variable Pay and Joining Bonus are required for GCC/NOC.
+Shift Type is required for GCC/NOC/Rebadge/Colocation.
+Historical records remain reportable.
+Build note: Follow the approved HGV PRD, App Flow, Tech Stack and Backend Schema. If a material decision is undocumented, stop and request clarification.
+PHASE 6 — Compensation & Billing Engine
+Implement compensation capture and deterministic monthly billing.
+Phase Tasks
+Store annual Fixed CTC in INR and derive monthly fixed salary as annual / 12.
+Variable Pay modes: None, Flat %, Custom Amount.
+Flat % = monthly fixed salary × configured percentage.
+Salary Cost = (Fixed Salary ÷ FX Rate) + Variable Pay Amount.
+Implement margin, facility, user bundle and shift allowance components.
+Joining Bonus: Month 1 = 1/3, Month 2 = 1/3, Month 3 = 1/3, Month 4 onward = 0.
+Fully Loaded Cost = salary cost + margin + facility + user bundle + shift allowance + joining bonus component.
+PMO monthly validated shift allowance overrides Shift Type default for matching Employee ID + Billing Month.
+Rebadge/Colocation: facility + user bundle only.
+Non-GCC Fixed Bid: billing calculated outside platform.
+Persist configuration version, calculation version and component-level results.
+Phase Output
+Completed compensation & billing engine with verified implementation artifacts and no unresolved critical defects.
+Verification Checklist
+Unit tests cover all formulas and edge cases.
+Joining bonus stops after month 3.
+All variable-pay modes behave correctly.
+Override precedence works.
+Billing is reproducible for the same month/configuration.
+Non-GCC Fixed Bid has no platform-side billing calculation.
+Build note: Follow the approved HGV PRD, App Flow, Tech Stack and Backend Schema. If a material decision is undocumented, stop and request clarification.
+PHASE 7 — Bulk Uploads & Shift Allowance
+Implement controlled CSV ingestion with validation and partial success.
+Phase Tasks
+Create separate Master Data and Monthly Shift Allowance upload flows.
+Provide downloadable CSV templates.
+Validate mandatory fields, controlled values, data types and dates before mutation.
+New dropdown values must be created through Add New, not silently from CSV.
+Stage uploaded rows before applying changes.
+Support partial success with row-level downloadable errors.
+Create import batch and row-error records.
+Validate Employee ID + Billing Month shift allowance overrides.
+Protect against unsafe file types and spreadsheet formula injection.
+Phase Output
+Completed bulk uploads & shift allowance with verified implementation artifacts and no unresolved critical defects.
+Verification Checklist
+Valid rows import.
+Invalid rows produce actionable errors.
+Partial-success counts reconcile.
+CSV cannot silently create controlled values.
+Shift allowance overrides affect the correct billing month.
+Build note: Follow the approved HGV PRD, App Flow, Tech Stack and Backend Schema. If a material decision is undocumented, stop and request clarification.
+PHASE 8 — Reports & Exports
+Build approved Excel/PDF reporting.
+Phase Tasks
+Build Master Data Export.
+Build monthly Billing Summary with employee details and aggregates by Domain Lead and Engagement Type.
+Build Headcount Summary.
+Support filters: Engagement Type, Domain Lead, Billing Month/Year and Assignment Status.
+Apply role-based data visibility and PII masking.
+Generate Excel and PDF from server-side report data.
+Persist report jobs where asynchronous generation is needed.
+Include generation timestamp and relevant filter/configuration metadata.
+Phase Output
+Completed reports & exports with verified implementation artifacts and no unresolved critical defects.
+Verification Checklist
+Report results match filtered application data.
+Billing totals reconcile to stored billing results.
+Excel and PDF exports open correctly.
+Unauthorized data is excluded.
+Build note: Follow the approved HGV PRD, App Flow, Tech Stack and Backend Schema. If a material decision is undocumented, stop and request clarification.
+PHASE 9 — Billing Configuration, Users & Audit
+Complete administrative operation and governance.
+Phase Tasks
+Build HR Manager-only Billing Configuration.
+Configure FX Rate INR→USD, Variable Pay Rate, Operational Margin %, Facility Cost USD, User Bundle Cost USD and Shift Allowance Rates.
+Support approved monthly/annual basis consistently.
+Version configuration changes.
+Build User Administration for approved roles.
+Audit compensation, billing configuration, workforce, uploads and role changes.
+Build searchable audit view with actor, event, entity and date filters.
+Exclude passwords, tokens and unnecessary PII from audit logs.
+Phase Output
+Completed billing configuration, users & audit with verified implementation artifacts and no unresolved critical defects.
+Verification Checklist
+Only HR Manager can edit billing configuration.
+Configuration changes are versioned and audited.
+Billing uses the correct configuration version.
+User/role changes are logged.
+Build note: Follow the approved HGV PRD, App Flow, Tech Stack and Backend Schema. If a material decision is undocumented, stop and request clarification.
+PHASE 10 — Error Handling, Security & Accessibility Polish
+Complete cross-cutting production-readiness controls.
+Phase Tasks
+Standardize API error responses.
+Add inline form and server validation.
+Add skeleton, empty, retry, 404, 403 and 500 states.
+Use HTTPS/TLS and secure authentication storage.
+Encrypt sensitive data at rest.
+Mask Aadhar, PAN, DOB, addresses and emergency contacts in standard views.
+Validate upload MIME/type/size and protect against formula injection.
+Use parameterized database access.
+Apply appropriate rate limiting and security headers.
+Run accessibility and dependency/security scans.
+Phase Output
+Completed error handling, security & accessibility polish with verified implementation artifacts and no unresolved critical defects.
+Verification Checklist
+No secrets or sensitive values appear in logs.
+All protected APIs enforce authorization.
+Keyboard navigation works.
+Critical/high security issues are resolved or formally accepted.
+Build note: Follow the approved HGV PRD, App Flow, Tech Stack and Backend Schema. If a material decision is undocumented, stop and request clarification.
+PHASE 11 — E2E Testing & UAT
+Validate all critical user journeys and business rules.
+Phase Tasks
+Create Playwright tests for authentication and RBAC.
+Test workforce create/edit/search/filter and dynamic mandatory fields.
+Test Variable Pay modes and compensation.
+Test Joining Bonus across months 1–4.
+Test billing component calculations.
+Test shift allowance upload and override precedence.
+Test CSV partial success and row-level errors.
+Test reports and Excel/PDF exports.
+Test Billing Configuration permissions and audit trail.
+Run regression suite and conduct UAT with representative non-production-sensitive data.
+Phase Output
+Completed e2e testing & uat with verified implementation artifacts and no unresolved critical defects.
+Verification Checklist
+Critical E2E tests pass.
+Billing unit tests pass.
+RBAC tests pass.
+Import/report tests pass.
+UAT sign-off is recorded.
+Build note: Follow the approved HGV PRD, App Flow, Tech Stack and Backend Schema. If a material decision is undocumented, stop and request clarification.
+PHASE 12 — Production Deployment & Handover
+Deploy the verified platform and complete operational handover.
+Phase Tasks
+Provision production database, storage and hosting.
+Apply migrations after backup/rollback readiness is confirmed.
+Configure production secrets through approved secret management.
+Configure domain and TLS.
+Deploy through CI/CD.
+Create the initial HR Manager account securely.
+Run smoke tests for login, workforce, billing, uploads, reports and authorization.
+Verify monitoring, backups and alerts.
+Document rollback, migrations, support ownership and known limitations.
+Complete final HR/PMO/operations handover.
+Phase Output
+Completed production deployment & handover with verified implementation artifacts and no unresolved critical defects.
+Verification Checklist
+Production loads over valid HTTPS.
+Schema matches approved release.
+Role restrictions work in production.
+Billing and reports work with approved configuration.
+Uploads and row-level errors work.
+Monitoring/backups are confirmed.
+Rollback procedure is documented.
+Build note: Follow the approved HGV PRD, App Flow, Tech Stack and Backend Schema. If a material decision is undocumented, stop and request clarification.
+Critical Business Rule Test Matrix
+Area
+Condition
+Expected Result
+Joining Bonus
+Month 1
+1/3 component
+Joining Bonus
+Month 2
+1/3 component
+Joining Bonus
+Month 3
+1/3 component
+Joining Bonus
+Month 4+
+0
+Variable Pay
+None
+0
+Variable Pay
+Flat %
+Monthly Fixed Salary × configured %
+Variable Pay
+Custom Amount
+Configured amount
+Shift Allowance
+No override
+Shift Type default
+Shift Allowance
+Valid PMO override
+Override for Employee ID + Billing Month
+Rebadge/Colocation
+Billing
+Facility + User Bundle only
+Non-GCC Fixed Bid
+Billing
+Outside-platform billing
+CSV
+Mixed valid/invalid
+Valid rows import; invalid rows reported
+RBAC
+GCC Lead edits
+Rejected
+RBAC
+Team Member edits Billing Configuration
+Rejected
+RBAC
+HR Manager edits Billing Configuration
+Allowed + audited
+
+Implementation Dependency Order
+Environment → Foundation → Database → Authentication/RBAC → Navigation → Workforce → Compensation/Billing → Bulk Upload → Reports → Administration/Audit → Polish → E2E/UAT → Production.
+Definition of Done
+Approved HGV requirements are implemented without undocumented business-rule changes.
+All three roles are enforced server-side.
+Workforce, compensation, billing, uploads and reports are operational.
+Joining Bonus and Variable Pay rules are covered by automated tests.
+Billing results are traceable to configuration and calculation versions.
+Sensitive PII and billing data are protected.
+Critical E2E and UAT scenarios pass.
+Production deployment, monitoring, backup and rollback documentation are complete.
+Decision Protocol
+When implementation reaches an undocumented material decision, stop before coding that decision and request clarification. The request should identify the missing requirement, the concrete options and the implementation impact. This keeps the implementation plan from becoming an accidental source of new product requirements.
