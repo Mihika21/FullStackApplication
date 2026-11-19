@@ -23,8 +23,16 @@ import {
   X,
   Plus,
   UploadCloud,
+  Award,
+  ShieldCheck,
+  Briefcase,
+  Trash2,
+  ExternalLink,
+  Layers,
 } from "lucide-react";
 import { DocumentUploadModal } from "@/components/workforce/DocumentUploadModal";
+import { SkillManagementModal } from "@/components/workforce/SkillManagementModal";
+import { CertificationModal } from "@/components/workforce/CertificationModal";
 
 export default function EmployeeDetailPage({ params }: { params: { id: string } }) {
   const router = useRouter();
@@ -34,6 +42,11 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
 
   // Upload modal state
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
+
+  // Skill & Cert modals state
+  const [skillModalOpen, setSkillModalOpen] = useState(false);
+  const [selectedSkillToEdit, setSelectedSkillToEdit] = useState<any>(null);
+  const [certModalOpen, setCertModalOpen] = useState(false);
 
   // Deactivate modal state
   const [deactivateModalOpen, setDeactivateModalOpen] = useState(false);
@@ -88,6 +101,75 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
       console.error(err);
     } finally {
       setDeactivating(false);
+    }
+  };
+
+  const handleDeleteSkill = async (skillId: string) => {
+    if (!confirm("Are you sure you want to remove this skill rating?")) return;
+    try {
+      const res = await fetch(`/api/v1/employees/${params.id}/skills?skillId=${skillId}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        fetchEmployee();
+      } else {
+        const data = await res.json();
+        alert(data.error || "Failed to delete skill");
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleDeleteCert = async (certId: string) => {
+    if (!confirm("Are you sure you want to delete this certification?")) return;
+    try {
+      const res = await fetch(`/api/v1/employees/${params.id}/certifications?certId=${certId}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        fetchEmployee();
+      } else {
+        const data = await res.json();
+        alert(data.error || "Failed to delete certification");
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleDeleteAllocation = async (allocId: string, projectName: string) => {
+    if (!confirm(`Remove allocation on '${projectName}' for ${employee.employeeName}?`)) return;
+    try {
+      const res = await fetch(`/api/v1/allocations/${allocId}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        fetchEmployee();
+      } else {
+        const data = await res.json();
+        alert(data.error || "Failed to remove allocation");
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleConfirmAllocation = async (allocId: string) => {
+    try {
+      const res = await fetch(`/api/v1/allocations/${allocId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "CONFIRMED" }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        fetchEmployee();
+      } else {
+        alert(data.error || "Cannot confirm allocation due to capacity limit");
+      }
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -330,6 +412,260 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
             )}
           </div>
 
+          {/* Section: Skills & Competencies (BRD Capability Inventory) */}
+          <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-2xs space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+              <div>
+                <h2 className="text-xs font-bold uppercase tracking-wider text-hgv-navy flex items-center gap-1.5">
+                  <Award className="w-4 h-4 text-hgv-teal" />
+                  Skills & Competencies Inventory
+                </h2>
+                <span className="text-[10px] text-slate-400">
+                  Scale: 0 (No Exposure) to 5 (Expert Authority)
+                </span>
+              </div>
+              {permissions?.canEditWorkforce && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedSkillToEdit(null);
+                    setSkillModalOpen(true);
+                  }}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold text-white bg-hgv-teal hover:bg-hgv-teal/90 rounded-md shadow-2xs transition-colors cursor-pointer"
+                >
+                  <Plus className="w-3 h-3" /> Add Skill
+                </button>
+              )}
+            </div>
+
+            {employee.skillRatings && employee.skillRatings.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {employee.skillRatings.map((sr: any) => {
+                  const val = sr.validatedRating ?? 0;
+                  const self = sr.selfRating ?? 0;
+                  const levelColors = [
+                    "bg-slate-100 text-slate-700 border-slate-200", // 0
+                    "bg-sky-50 text-sky-700 border-sky-200", // 1
+                    "bg-blue-50 text-blue-700 border-blue-200", // 2
+                    "bg-teal-50 text-teal-800 border-teal-200", // 3
+                    "bg-indigo-50 text-indigo-800 border-indigo-200", // 4
+                    "bg-emerald-50 text-emerald-800 border-emerald-200 font-bold", // 5
+                  ];
+                  const levelLabels = [
+                    "No exposure",
+                    "Awareness",
+                    "Working",
+                    "Proficient",
+                    "Advanced",
+                    "Expert",
+                  ];
+
+                  return (
+                    <div
+                      key={sr.id}
+                      className="p-3 rounded-lg bg-slate-50 border border-slate-200/80 hover:border-slate-300 transition-all flex flex-col justify-between space-y-2"
+                    >
+                      <div>
+                        <div className="flex items-start justify-between gap-1.5">
+                          <div>
+                            <span className="font-bold text-xs text-slate-800 block">
+                              {sr.skill?.name || "Skill"}
+                            </span>
+                            <div className="flex items-center gap-1 mt-0.5">
+                              <span className="text-[9px] px-1.5 py-0.2 rounded bg-slate-200 text-slate-600 font-medium">
+                                {sr.skill?.category?.name || "General"}
+                              </span>
+                              <span className="text-[9px] text-slate-400">
+                                {sr.skill?.type || "Technical"}
+                              </span>
+                            </div>
+                          </div>
+                          <span
+                            className={`px-2 py-0.5 rounded text-[10px] border font-bold ${
+                              levelColors[val] || levelColors[0]
+                            }`}
+                          >
+                            L{val} • {levelLabels[val]}
+                          </span>
+                        </div>
+
+                        {sr.evidence && (
+                          <p className="text-[10px] text-slate-500 mt-1.5 line-clamp-2 italic">
+                            "{sr.evidence}"
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="flex items-center justify-between pt-1 border-t border-slate-200/60 text-[10px] text-slate-400">
+                        <div className="flex items-center gap-2">
+                          <span>Self: L{self}</span>
+                          <span>•</span>
+                          <span>{sr.yearsOfExperience || 0} yrs</span>
+                        </div>
+
+                        {permissions?.canEditWorkforce && (
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedSkillToEdit(sr);
+                                setSkillModalOpen(true);
+                              }}
+                              className="text-slate-500 hover:text-hgv-teal transition"
+                              title="Edit rating"
+                            >
+                              <Edit className="w-3 h-3" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteSkill(sr.skillId)}
+                              className="text-slate-400 hover:text-red-500 transition"
+                              title="Remove skill"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="p-6 text-center bg-slate-50 rounded-lg border border-dashed border-slate-200">
+                <Award className="w-8 h-8 text-slate-300 mx-auto mb-1.5" />
+                <p className="text-xs font-semibold text-slate-600">No skills assessed yet</p>
+                <p className="text-[11px] text-slate-400">
+                  Assess competencies and track proficiency against role benchmarks.
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Section: Project Allocations & Capacity */}
+          <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-2xs space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+              <div>
+                <h2 className="text-xs font-bold uppercase tracking-wider text-hgv-navy flex items-center gap-1.5">
+                  <Briefcase className="w-4 h-4 text-hgv-sky" />
+                  Project Allocations & Capacity
+                </h2>
+                <span className="text-[10px] text-slate-400">
+                  FTE Utilization and Project Assignments
+                </span>
+              </div>
+            </div>
+
+            {/* Capacity Meter */}
+            {(() => {
+              const allocations = employee.projectAllocations || [];
+              const confirmedTotal = allocations
+                .filter((a: any) => a.status === "CONFIRMED")
+                .reduce((sum: number, a: any) => sum + (a.allocationPct || 0), 0);
+              const freeCap = Math.max(0, 1.0 - confirmedTotal);
+              const isOver = confirmedTotal > 1.0;
+
+              return (
+                <div className="p-3 rounded-lg bg-slate-50 border border-slate-100 space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-semibold text-slate-700">
+                      Total Allocation:{" "}
+                      <span className={isOver ? "text-red-600 font-bold" : "text-hgv-navy font-bold"}>
+                        {Math.round(confirmedTotal * 100)}%
+                      </span>{" "}
+                      ({confirmedTotal.toFixed(2)} FTE)
+                    </span>
+                    <span className="font-semibold text-emerald-600">
+                      Free Capacity: {Math.round(freeCap * 100)}%
+                    </span>
+                  </div>
+
+                  <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden flex">
+                    <div
+                      className={`h-full transition-all ${
+                        isOver ? "bg-red-500" : confirmedTotal > 0.8 ? "bg-amber-500" : "bg-hgv-teal"
+                      }`}
+                      style={{ width: `${Math.min(100, confirmedTotal * 100)}%` }}
+                    />
+                  </div>
+
+                  {isOver && (
+                    <p className="text-[10px] text-red-600 font-semibold flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" /> Over-allocated across confirmed projects!
+                    </p>
+                  )}
+                </div>
+              );
+            })()}
+
+            {/* Allocations list */}
+            {employee.projectAllocations && employee.projectAllocations.length > 0 ? (
+              <div className="space-y-2">
+                {employee.projectAllocations.map((alloc: any) => (
+                  <div
+                    key={alloc.id}
+                    className="p-3 rounded-lg bg-slate-50 border border-slate-200/80 hover:border-slate-300 transition-all flex items-center justify-between text-xs gap-3"
+                  >
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={`/projects/${alloc.projectId || encodeURIComponent(alloc.projectName)}`}
+                          className="font-bold text-hgv-navy hover:text-hgv-teal hover:underline"
+                          title="Open Project Resource Details"
+                        >
+                          {alloc.projectName}
+                        </Link>
+                        <span
+                          className={`px-1.5 py-0.2 rounded text-[9px] font-bold ${
+                            alloc.status === "CONFIRMED"
+                              ? "bg-emerald-100 text-emerald-800"
+                              : "bg-amber-100 text-amber-800"
+                          }`}
+                        >
+                          {alloc.status}
+                        </span>
+                      </div>
+                      <span className="text-[11px] text-slate-500 block mt-0.5">
+                        Role: {alloc.projectRole || employee.hgvRole} • From: {new Date(alloc.startDate).toLocaleDateString()}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-3 shrink-0">
+                      <span className="font-bold text-hgv-navy text-sm">
+                        {Math.round(alloc.allocationPct * 100)}%
+                      </span>
+
+                      {permissions?.canEditWorkforce && (
+                        <div className="flex items-center gap-1.5 pl-2 border-l border-slate-200">
+                          {alloc.status === "DRAFT" && (
+                            <button
+                              type="button"
+                              onClick={() => handleConfirmAllocation(alloc.id)}
+                              className="px-2 py-1 rounded bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-semibold transition"
+                              title="Confirm this draft allocation"
+                            >
+                              Confirm
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteAllocation(alloc.id, alloc.projectName)}
+                            className="p-1.5 rounded text-slate-400 hover:text-red-600 hover:bg-red-50 transition"
+                            title="Remove allocation"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-slate-400 italic">No project allocations assigned.</p>
+            )}
+          </div>
+
           {/* Section: Historical Attrition (if inactive) */}
           {employee.attritions && employee.attritions.length > 0 && (
             <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-2xs">
@@ -373,6 +709,112 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
                 <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                 <span>{employee.address?.baseLocation || "Hyderabad, India"}</span>
               </div>
+            </div>
+          </div>
+
+          {/* Professional Certifications (BRD Section 5.4 with Mandatory ID & 90-day alert) */}
+          <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-2xs space-y-3">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+              <div>
+                <h2 className="text-xs font-bold uppercase tracking-wider text-hgv-navy flex items-center gap-1.5">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                  Certifications
+                </h2>
+                <span className="text-[10px] text-slate-400">
+                  Accredited Credentials (≤90d alert)
+                </span>
+              </div>
+              {permissions?.canEditWorkforce && (
+                <button
+                  type="button"
+                  onClick={() => setCertModalOpen(true)}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-md shadow-2xs transition-colors cursor-pointer"
+                >
+                  <Plus className="w-3 h-3" /> Add Cert
+                </button>
+              )}
+            </div>
+
+            <div className="space-y-2.5 text-xs">
+              {employee.certifications && employee.certifications.length > 0 ? (
+                employee.certifications.map((c: any) => {
+                  const statusColors: Record<string, string> = {
+                    Valid: "bg-emerald-50 text-emerald-700 border-emerald-200",
+                    "Expiring soon": "bg-amber-50 text-amber-800 border-amber-300 font-bold animate-pulse",
+                    Expired: "bg-red-50 text-red-700 border-red-200 font-bold",
+                    "No expiry": "bg-slate-100 text-slate-600 border-slate-200",
+                  };
+
+                  return (
+                    <div
+                      key={c.id}
+                      className="p-3 rounded-lg bg-slate-50 border border-slate-200/80 hover:border-slate-300 transition-all space-y-1.5"
+                    >
+                      <div className="flex items-start justify-between gap-1.5">
+                        <div>
+                          <span className="font-bold text-xs text-slate-800 block">
+                            {c.name}
+                          </span>
+                          <span className="text-[11px] text-slate-500 block">
+                            {c.issuingBody}
+                          </span>
+                        </div>
+                        <span
+                          className={`px-2 py-0.5 rounded text-[10px] border shrink-0 ${
+                            statusColors[c.status] || statusColors["Valid"]
+                          }`}
+                        >
+                          {c.status}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-200/60 font-mono">
+                        <span className="text-[10px] text-slate-600 bg-white px-1.5 py-0.2 rounded border border-slate-200">
+                          ID: {c.certificationId}
+                        </span>
+                        {permissions?.canEditWorkforce && (
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteCert(c.id)}
+                            className="text-slate-400 hover:text-red-500 transition"
+                            title="Delete certification"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="flex items-center justify-between text-[10px] text-slate-400">
+                        <span>
+                          {c.issueDate ? `Issued: ${new Date(c.issueDate).toLocaleDateString()}` : "Active"}
+                          {c.expiryDate ? ` • Exp: ${new Date(c.expiryDate).toLocaleDateString()}` : ""}
+                        </span>
+                        {c.credentialUrl && (
+                          <a
+                            href={c.credentialUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-hgv-teal hover:underline flex items-center gap-0.5"
+                          >
+                            Verify <ExternalLink className="w-2.5 h-2.5" />
+                          </a>
+                        )}
+                      </div>
+
+                      {c.fileName && (
+                        <div className="text-[10px] text-slate-500 bg-white p-1 rounded border border-slate-100 flex items-center gap-1">
+                          <FileText className="w-3 h-3 text-hgv-teal" />
+                          <span className="truncate">{c.fileName}</span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
+              ) : (
+                <p className="text-[11px] text-slate-400 py-1 italic">
+                  No professional certifications recorded.
+                </p>
+              )}
             </div>
           </div>
 
@@ -516,13 +958,35 @@ export default function EmployeeDetailPage({ params }: { params: { id: string } 
 
       {/* Document Upload Modal with Live Preview & Confirmation */}
       {employee && (
-        <DocumentUploadModal
-          isOpen={uploadModalOpen}
-          onClose={() => setUploadModalOpen(false)}
-          employeeId={employee.id}
-          employeeName={employee.employeeName}
-          onSuccess={fetchEmployee}
-        />
+        <>
+          <DocumentUploadModal
+            isOpen={uploadModalOpen}
+            onClose={() => setUploadModalOpen(false)}
+            employeeId={employee.id}
+            employeeName={employee.employeeName}
+            onSuccess={fetchEmployee}
+          />
+
+          <SkillManagementModal
+            isOpen={skillModalOpen}
+            onClose={() => {
+              setSkillModalOpen(false);
+              setSelectedSkillToEdit(null);
+            }}
+            employeeId={employee.id}
+            employeeName={employee.employeeName}
+            initialSkill={selectedSkillToEdit}
+            onSuccess={fetchEmployee}
+          />
+
+          <CertificationModal
+            isOpen={certModalOpen}
+            onClose={() => setCertModalOpen(false)}
+            employeeId={employee.id}
+            employeeName={employee.employeeName}
+            onSuccess={fetchEmployee}
+          />
+        </>
       )}
     </div>
   );

@@ -37,7 +37,7 @@ export default function MasterDataUploadPage() {
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!file) {
-      setError("Please select a valid CSV file to upload.");
+      setError("Please select a valid CSV or Excel (.xlsx) file to upload.");
       return;
     }
 
@@ -186,10 +186,10 @@ export default function MasterDataUploadPage() {
               <UploadCloud className="w-7 h-7" />
             </div>
             <p className="text-sm font-semibold text-slate-800">
-              Choose a CSV file to upload workforce master data
+              Choose a CSV or Excel (.xlsx) file to upload workforce master data
             </p>
             <p className="text-xs text-slate-400 mt-1">
-              Supports .csv formatted exports up to 10MB
+              Supports .csv and .xlsx formatted spreadsheets up to 10MB
             </p>
 
             <label className="mt-4 cursor-pointer">
@@ -198,7 +198,7 @@ export default function MasterDataUploadPage() {
               </span>
               <input
                 type="file"
-                accept=".csv"
+                accept=".csv,.xlsx,.xls"
                 onChange={handleFileChange}
                 className="hidden"
               />
@@ -251,7 +251,7 @@ export default function MasterDataUploadPage() {
               disabled={!file || uploading}
               className="px-6 py-2.5 rounded-lg bg-hgv-navy hover:bg-hgv-navy-light text-white text-xs font-semibold shadow-xs transition disabled:opacity-50"
             >
-              {uploading ? "Validating & Ingesting..." : "Process Master Data CSV"}
+              {uploading ? "Validating & Ingesting..." : "Process Master Data File"}
             </button>
           </div>
         </form>

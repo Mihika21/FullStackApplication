@@ -22,6 +22,12 @@ interface RolePermissions {
   canManageUsers: boolean;
   canViewAudit: boolean;
   canExportReports: boolean;
+  canAuthorCourses?: boolean;
+  canManageTeamLms?: boolean;
+  canAccessLearnerPortal?: boolean;
+  canViewExecutiveScorecard?: boolean;
+  canExportAuditPackage?: boolean;
+  isAuditor?: boolean;
 }
 
 interface AuthContextType {

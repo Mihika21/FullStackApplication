@@ -39,3 +39,52 @@ This document tracks all files modified, created, and configured in this cloned 
 ### 6. `CHANGES.md`
 - **Action**: Created
 - **Rationale**: Comprehensive log of changes made to the cloned repository as mandated by project requirements.
+
+---
+
+## Enterprise Learning & Compliance Platform (ELMS) Module Integration
+
+Conforming strictly to **PRD-CORP-LMS-2026-V1.0** and enterprise regulatory standards (SOC 2 Type II, ISO/IEC 27001:2022, GDPR, POSH, OSHA):
+
+### 1. Database Schema (`prisma/schema.prisma`)
+- Added 12 new relational data models for ELMS:
+  - `LmsCourse`: Master course records with compliance metadata, category, mandatory flag, 365-day recertification intervals, passing threshold, and video lock flag.
+  - `LmsModule`: Hierarchical curriculum grouping.
+  - `LmsLesson`: Multi-format lesson assets (VIDEO with skip-lock, TEXT/markdown, PDF slide decks).
+  - `LmsLessonProgress`: Second-by-second playback tracking and lesson completion bookmarks.
+  - `LmsQuiz`: Assessment configuration with passing percentage, attempt limits, and cooldown intervals.
+  - `LmsQuestion`: Question bank supporting Single-Choice (MCQ_SINGLE), Multi-Select (MCQ_MULTI), and True/False (TRUE_FALSE).
+  - `LmsQuestionOption`: Question choices with correct flags.
+  - `LmsQuizAttempt`: Immutable submission records and scoring telemetry.
+  - `LmsEnrollment`: Workflow state machine (ASSIGNED, IN_PROGRESS, COMPLETED, OVERDUE, EXPIRED) with due-date tracking.
+  - `LmsCertificate`: Cryptographically hashed credentials with unique certificate numbers and SHA-256 digital verification hashes.
+  - `LmsNudgeLog`: Audit trail of managerial reminder actions.
+  - `LmsAuditTrail`: Write-once, append-only regulatory log with 7-year retention.
+
+### 2. Backend REST API Routes (`src/app/api/v1/lms/...`)
+- `/api/v1/lms/courses`: Catalog listing and admin course creation.
+- `/api/v1/lms/courses/[id]`: Course details with nested modules, lessons, and quizzes.
+- `/api/v1/lms/enrollments`: Enrollment queries and rule-based dynamic assignment.
+- `/api/v1/lms/lessons/progress`: Watch duration tracking and progress calculation.
+- `/api/v1/lms/quiz/submit`: Real-time assessment grading, remediation feedback, and automatic certificate issuance upon passing.
+- `/api/v1/lms/certificates`: Certified credential wallet retrieval.
+- `/api/v1/lms/verify`: Public/internal statutory certificate verification engine.
+- `/api/v1/lms/manager/heatmap`: Team compliance matrix and department aggregation.
+- `/api/v1/lms/manager/nudge`: 1-click individual and bulk multi-channel reminder dispatcher.
+- `/api/v1/lms/recertification/run`: 365-day recertification lifecycle engine (T-30 auto-re-enrollment).
+- `/api/v1/lms/analytics`: Executive compliance scorecard and department rankings.
+- `/api/v1/lms/audit`: Filterable immutable audit trail viewer.
+- `/api/v1/lms/reports/export`: 1-click SOC 2 / ISO 27001 regulatory compliance evidence export (CSV).
+
+### 3. Frontend Web Applications (`src/app/lms/...`)
+- `/lms` (**Learner Portal**): Priority-driven dashboard with urgent overdue alert banner, course progress tracking, and digital certificate wallet with client-side PDF downloads.
+- `/lms/learn/[courseId]` (**Interactive Learning Player**): Multi-format player with video fast-forward lockout for compliance, slide carousel, rich text notes, and interactive quiz with remediation review.
+- `/lms/manager` (**People Manager Command Center**): Team compliance heatmap matrix, summary KPI gauges, 1-click individual and bulk nudge triggers, and team CSV exports.
+- `/lms/courses` (**Course Authoring & CMS**): Management hub for L&D admins to create, edit, and publish courses.
+- `/lms/analytics` (**Executive Compliance Scorecard**): Company-wide compliance % gauge vs ≥ 99.5% target SLA, department rankings, recertification engine triggers, and immutable audit explorer.
+- `/lms/verify` (**Certificate Verification Registry**): Public/internal verification portal by certificate number, UUID, or SHA-256 hash.
+
+### 4. Seed Data & Verification
+- `prisma/seed_lms.js`: Seeded 6 realistic courses (4 mandatory compliance, 2 electives), realistic workforce enrollments, certificates with SHA-256 signatures, past nudge logs, and audit entries.
+- `test_lms_e2e.js`: 44 automated end-to-end verification checks covering the full ELMS lifecycle (100% pass rate).
+

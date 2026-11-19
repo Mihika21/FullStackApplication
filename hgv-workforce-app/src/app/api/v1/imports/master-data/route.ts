@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser, getRolePermissions } from "@/lib/auth";
 import { logAuditEvent } from "@/lib/audit";
 import Papa from "papaparse";
+import ExcelJS from "exceljs";
 
 export async function POST(request: Request) {
   try {
@@ -11,7 +12,7 @@ export async function POST(request: Request) {
 
     if (!permissions.canUploadCsv) {
       return NextResponse.json(
-        { error: "Forbidden: You do not have permission to upload CSV files" },
+        { error: "Forbidden: You do not have permission to upload files" },
         { status: 403 }
       );
     }
@@ -23,16 +24,64 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
     }
 
-    const text = await file.text();
-    const parsed = Papa.parse(text, {
-      header: true,
-      skipEmptyLines: true,
-      transformHeader: (h) => h.trim(),
-    });
+    const fileName = file.name.toLowerCase();
+    let rows: Record<string, string>[] = [];
 
-    const rows = parsed.data as Record<string, string>[];
+    if (fileName.endsWith(".xlsx") || fileName.endsWith(".xls")) {
+      const arrayBuffer = await file.arrayBuffer();
+      const workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.load(arrayBuffer);
+      const worksheet = workbook.worksheets[0];
+
+      if (!worksheet) {
+        return NextResponse.json({ error: "Excel file contains no worksheets" }, { status: 400 });
+      }
+
+      const headers: string[] = [];
+      worksheet.eachRow((row, rowNumber) => {
+        if (rowNumber === 1) {
+          row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+            headers[colNumber] = String(cell.value || "").trim();
+          });
+        } else {
+          const rowObj: Record<string, string> = {};
+          let hasData = false;
+          row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+            const header = headers[colNumber];
+            if (!header) return;
+            let val: any = cell.value;
+            if (val instanceof Date) {
+              val = val.toISOString().split("T")[0];
+            } else if (val && typeof val === "object") {
+              if ("result" in val) val = val.result ?? "";
+              else if ("text" in val) val = val.text ?? "";
+              else if ("richText" in val && Array.isArray(val.richText)) {
+                val = val.richText.map((rt: any) => rt.text).join("");
+              } else {
+                val = String(val);
+              }
+            }
+            const strVal = val !== null && val !== undefined ? String(val).trim() : "";
+            if (strVal) hasData = true;
+            rowObj[header] = strVal;
+          });
+          if (hasData) {
+            rows.push(rowObj);
+          }
+        }
+      });
+    } else {
+      const text = await file.text();
+      const parsed = Papa.parse(text, {
+        header: true,
+        skipEmptyLines: true,
+        transformHeader: (h) => h.trim(),
+      });
+      rows = parsed.data as Record<string, string>[];
+    }
+
     if (rows.length === 0) {
-      return NextResponse.json({ error: "CSV file is empty" }, { status: 400 });
+      return NextResponse.json({ error: "Uploaded file is empty" }, { status: 400 });
     }
 
     // Load reference lookups to enforce controlled value rules
@@ -96,6 +145,13 @@ export async function POST(request: Request) {
       const variableCustomStr = row["Custom Variable Pay"] || row["variablePayCustomInrMonthly"] || "";
       const joiningBonusStr = row["Joining Bonus"] || row["joiningBonusInr"] || "0";
       const baseLocation = row["Base Location"] || row["baseLocation"] || "Hyderabad";
+      const reportingManager = row["Reporting Manager"] || row["reportingManager"] || "";
+      const businessUnit = row["Business Unit"] || row["businessUnit"] || "";
+      const practice = row["Practice"] || row["practice"] || "";
+      const subPractice = row["Sub Practice"] || row["subPractice"] || "";
+      const gradeLevel = row["Grade Level"] || row["gradeLevel"] || "";
+      const workEmail = row["Work Email"] || row["hgvEmail"] || "";
+      const personalPhone = row["Personal Phone"] || row["mobile"] || "";
 
       const errors: { col: string; code: string; msg: string }[] = [];
 
@@ -196,6 +252,11 @@ export async function POST(request: Request) {
             hgvRole: hgvRole.trim(),
             hgvDepartment: hgvDept.trim() || null,
             domainLeadId: domainLeadId!,
+            reportingManager: reportingManager.trim() || null,
+            businessUnit: businessUnit.trim() || null,
+            practice: practice.trim() || null,
+            subPractice: subPractice.trim() || null,
+            gradeLevel: gradeLevel.trim() || null,
             sourceId: sourceId!,
             shiftTypeId,
             project: project.trim() || null,
@@ -212,6 +273,10 @@ export async function POST(request: Request) {
                 }
               : null,
           baseLocation,
+          contact: workEmail.trim() || personalPhone.trim() ? {
+            hgvEmail: workEmail.trim() || null,
+            mobile: personalPhone.trim() || null,
+          } : null,
         });
       }
     }
@@ -234,6 +299,15 @@ export async function POST(request: Request) {
             employeeId: emp.id,
             effectiveFrom: item.employee.hgvStartDate || new Date(),
             ...item.compensation,
+          },
+        });
+      }
+
+      if (item.contact) {
+        await prisma.employeeContact.create({
+          data: {
+            employeeId: emp.id,
+            ...item.contact,
           },
         });
       }
