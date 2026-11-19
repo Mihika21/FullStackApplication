@@ -24,6 +24,24 @@ export async function GET(
           orderBy: { attritionDate: "desc" },
         },
         documents: true,
+        skillRatings: {
+          include: {
+            skill: {
+              include: { category: true },
+            },
+          },
+          orderBy: [
+            { validatedRating: "desc" },
+            { skill: { name: "asc" } },
+          ],
+        },
+        certifications: {
+          orderBy: { createdAt: "desc" },
+        },
+        projectAllocations: {
+          include: { project: true },
+          orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+        },
       },
     });
 
@@ -43,9 +61,25 @@ export async function GET(
       };
     });
 
+    const enrichedCertifications = employee.certifications.map((c) => {
+      let status = "Valid";
+      if (!c.expiryDate) {
+        status = "No expiry";
+      } else {
+        const now = new Date();
+        if (new Date(c.expiryDate) < now) {
+          status = "Expired";
+        } else if (new Date(c.expiryDate) <= new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000)) {
+          status = "Expiring soon";
+        }
+      }
+      return { ...c, status };
+    });
+
     return NextResponse.json({
       ...employee,
       documents: maskedDocuments,
+      certifications: enrichedCertifications,
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

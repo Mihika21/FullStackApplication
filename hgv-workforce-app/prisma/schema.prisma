@@ -1,6 +1,6 @@
 datasource db {
   provider = "sqlite"
-  url      = env("DATABASE_URL")
+  url      = "file:./dev.db"
 }
 
 generator client {
@@ -114,6 +114,9 @@ model Employee {
   documents          EmployeeDocument[]
   shiftOverrides     ShiftAllowanceOverride[]
   billingResults     BillingResult[]
+  skillRatings       EmployeeSkill[]
+  certifications     EmployeeCertification[]
+  projectAllocations ProjectAllocation[]
 }
 
 model EmployeeCompensation {
@@ -295,3 +298,329 @@ model AuditEvent {
   beforeJson  String?
   afterJson   String?
 }
+
+model SkillCategory {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  sortOrder   Int      @default(0)
+  active      Boolean  @default(true)
+  skills      Skill[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Skill {
+  id               String                 @id @default(uuid())
+  code             String?                @unique // e.g. "SK001"
+  name             String                 @unique
+  categoryId       String
+  category         SkillCategory          @relation(fields: [categoryId], references: [id])
+  type             String                 @default("Technical") // Technical, Functional, Behavioural
+  synonyms         String?                // Comma-separated aliases e.g. "JS, JavaScript"
+  description      String?
+  active           Boolean                @default(true)
+  employeeRatings  EmployeeSkill[]
+  requirementLines RoleRequirementLine[]
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+}
+
+model EmployeeSkill {
+  id               String    @id @default(uuid())
+  employeeId       String
+  employee         Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  skillId          String
+  skill            Skill     @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  selfRating       Int       @default(0) // 0 to 5
+  validatedRating  Int       @default(0) // 0 to 5
+  yearsOfExperience Float?   @default(0)
+  lastUsed         DateTime?
+  evidence         String?
+  ratingSource     String    @default("MANAGER") // SELF, MANAGER, BULK_UPLOAD
+  validatedBy      String?
+  validatedAt      DateTime?
+  overrideComment  String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@unique([employeeId, skillId])
+}
+
+model EmployeeCertification {
+  id              String    @id @default(uuid())
+  employeeId      String
+  employee        Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  name            String
+  certificationId String    // Mandatory credential ID
+  issuingBody     String
+  issueDate       DateTime?
+  expiryDate      DateTime?
+  credentialUrl   String?
+  fileName        String?
+  fileSize        Int?
+  mimeType        String?
+  status          String    @default("Valid") // Valid, Expiring soon, Expired, No expiry
+  verified        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([employeeId, certificationId])
+}
+
+model RoleRequirementProfile {
+  id          String                @id @default(uuid())
+  roleName    String                @unique // e.g. "Senior Data Engineer", "Full Stack Developer"
+  department  String?
+  description String?
+  lines       RoleRequirementLine[]
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+}
+
+model RoleRequirementLine {
+  id           String                 @id @default(uuid())
+  profileId    String
+  profile      RoleRequirementProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  skillId      String
+  skill        Skill                  @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  minimumLevel Int                    @default(1) // 1 to 5
+  importance   String                 @default("MUST_HAVE") // MUST_HAVE, GOOD_TO_HAVE
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+
+  @@unique([profileId, skillId])
+}
+
+model Project {
+  id          String              @id @default(uuid())
+  name        String              @unique
+  code        String?             @unique
+  clientName  String?             @default("HGV")
+  description String?
+  status      String              @default("ACTIVE") // ACTIVE, PLANNING, COMPLETED, ON_HOLD
+  startDate   DateTime?
+  endDate     DateTime?
+  allocations ProjectAllocation[]
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+}
+
+model ProjectAllocation {
+  id            String    @id @default(uuid())
+  employeeId    String
+  employee      Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  projectId     String?
+  project       Project?  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectName   String
+  projectRole   String?
+  allocationPct Float     @default(1.0) // 0.0 to 1.0 (e.g. 0.8 = 80%)
+  startDate     DateTime  @default(now())
+  endDate       DateTime?
+  status        String    @default("DRAFT") // DRAFT, CONFIRMED, COMPLETED, CANCELLED
+  proposedBy    String?
+  confirmedBy   String?
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// ==========================================
+// ENTERPRISE LEARNING & COMPLIANCE (ELMS) MODELS
+// ==========================================
+
+model LmsCourse {
+  id                       String          @id @default(uuid())
+  title                    String
+  slug                     String          @unique
+  description              String
+  category                 String          @default("Cybersecurity & IT") // Cybersecurity & IT, Legal, Ethics & Compliance, Data Privacy, Safety, Engineering, Leadership
+  isMandatory              Boolean         @default(true)
+  recertificationDays      Int             @default(365) // 365, 180, etc.
+  passingScore             Int             @default(80)  // 80% passing threshold
+  estimatedDurationMinutes Int             @default(45)
+  enforceVideoCompletion   Boolean         @default(true) // Prevent scrubbing/skipping ahead
+  targetDepartment         String?         // null means All, or specific department
+  targetRole               String?         // null means All, or specific role
+  status                   String          @default("PUBLISHED") // DRAFT, PUBLISHED, ARCHIVED
+  version                  Int             @default(1)
+  publishedAt              DateTime?       @default(now())
+  createdAt                DateTime        @default(now())
+  updatedAt                DateTime        @updatedAt
+
+  modules                  LmsModule[]
+  enrollments              LmsEnrollment[]
+  certificates             LmsCertificate[]
+}
+
+model LmsModule {
+  id          String       @id @default(uuid())
+  courseId    String
+  course      LmsCourse    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  orderIndex  Int          @default(1)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  lessons     LmsLesson[]
+  quiz        LmsQuiz?
+}
+
+model LmsLesson {
+  id          String              @id @default(uuid())
+  moduleId    String
+  module      LmsModule           @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  title       String
+  contentType String              @default("VIDEO") // VIDEO, TEXT, PDF
+  contentUrl  String?
+  textContent String?
+  durationSec Int                 @default(300)
+  orderIndex  Int                 @default(1)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  progress    LmsLessonProgress[]
+}
+
+model LmsLessonProgress {
+  id             String        @id @default(uuid())
+  enrollmentId   String
+  enrollment     LmsEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  lessonId       String
+  lesson         LmsLesson     @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  userId         String?
+  secondsWatched Int           @default(0)
+  completed      Boolean       @default(false)
+  completedAt    DateTime?
+  updatedAt      DateTime      @updatedAt
+
+  @@unique([enrollmentId, lessonId])
+}
+
+model LmsQuiz {
+  id                      String           @id @default(uuid())
+  moduleId                String           @unique
+  module                  LmsModule        @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  title                   String
+  description             String?
+  passingThresholdPercent Int              @default(80)
+  maxAttempts             Int              @default(3)
+  cooldownHours           Int              @default(2)
+  createdAt               DateTime         @default(now())
+  updatedAt               DateTime         @updatedAt
+
+  questions               LmsQuestion[]
+  attempts                LmsQuizAttempt[]
+}
+
+model LmsQuestion {
+  id           String              @id @default(uuid())
+  quizId       String
+  quiz         LmsQuiz             @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  questionText String
+  type         String              @default("MCQ_SINGLE") // MCQ_SINGLE, MCQ_MULTI, TRUE_FALSE
+  points       Int                 @default(1)
+  orderIndex   Int                 @default(1)
+  explanation  String?             // Explanatory notes directing learner back to lesson
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  options      LmsQuestionOption[]
+}
+
+model LmsQuestionOption {
+  id         String      @id @default(uuid())
+  questionId String
+  question   LmsQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  optionText String
+  isCorrect  Boolean     @default(false)
+  orderIndex Int         @default(1)
+}
+
+model LmsQuizAttempt {
+  id            String        @id @default(uuid())
+  quizId        String
+  quiz          LmsQuiz       @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  enrollmentId  String
+  enrollment    LmsEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  userId        String?
+  scorePercent  Float
+  isPassed      Boolean
+  attemptNumber Int           @default(1)
+  answersJson   String?       // JSON string of user answers
+  submittedAt   DateTime      @default(now())
+}
+
+model LmsEnrollment {
+  id                String              @id @default(uuid())
+  userId            String?
+  employeeId        String?
+  userEmail         String
+  userName          String
+  department        String?
+  courseId          String
+  course            LmsCourse           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  status            String              @default("ASSIGNED") // ASSIGNED, IN_PROGRESS, COMPLETED, OVERDUE, EXPIRED
+  enrolledAt        DateTime            @default(now())
+  dueDate           DateTime
+  completedAt       DateTime?
+  progressPercent   Int                 @default(0)
+  currentLessonId   String?
+  isRecertification Boolean             @default(false)
+  previousCertId    String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  certificate       LmsCertificate?
+  lessonProgress    LmsLessonProgress[]
+  nudgeLogs         LmsNudgeLog[]
+  quizAttempts      LmsQuizAttempt[]
+}
+
+model LmsCertificate {
+  id                String        @id @default(uuid())
+  certificateNumber String        @unique // e.g. "CERT-2026-CYBER-8921"
+  enrollmentId      String        @unique
+  enrollment        LmsEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  userId            String?
+  userEmail         String
+  userName          String
+  courseId          String
+  course            LmsCourse     @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  issuedAt          DateTime      @default(now())
+  expiresAt         DateTime
+  scorePercent      Float
+  verificationHash  String        // Cryptographic SHA-256 hash
+  qrPayload         String?
+  status            String        @default("VALID") // VALID, EXPIRING_SOON, EXPIRED, REVOKED
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+}
+
+model LmsNudgeLog {
+  id              String        @id @default(uuid())
+  enrollmentId    String
+  enrollment      LmsEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  managerId       String?
+  managerName     String
+  targetUserEmail String
+  targetUserName  String
+  channel         String        @default("EMAIL") // EMAIL, SLACK, TEAMS, MULTI_CHANNEL
+  message         String
+  sentAt          DateTime      @default(now())
+}
+
+model LmsAuditTrail {
+  id           String   @id @default(uuid())
+  actorEmail   String
+  actorRole    String
+  action       String   // ENROLLMENT_CREATED, LESSON_LAUNCH, VIDEO_PROGRESS, QUIZ_SUBMIT, CERTIFICATE_ISSUED, NUDGE_SENT, COURSE_PUBLISHED, RECERTIFICATION_TRIGGERED
+  targetEntity String   // COURSE, ENROLLMENT, QUIZ, CERTIFICATE, NUDGE
+  entityId     String?
+  detailsJson  String?
+  ipAddress    String?  @default("127.0.0.1")
+  timestamp    DateTime @default(now())
+}
+
+

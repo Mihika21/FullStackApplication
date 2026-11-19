@@ -17,6 +17,9 @@ import {
   ShieldCheck,
   CheckCircle2,
   AlertCircle,
+  GraduationCap,
+  Award,
+  Flame,
 } from "lucide-react";
 
 export default function DashboardPage() {
@@ -234,6 +237,52 @@ export default function DashboardPage() {
               <p className="text-[10px] text-slate-400">Excel / PDF finance summary</p>
             </div>
           </Link>
+        </div>
+      </div>
+
+      {/* Enterprise Learning & Compliance Platform (ELMS) Hub */}
+      <div className="bg-linear-to-r from-slate-900 via-hgv-navy to-teal-950 p-5 rounded-2xl text-white shadow-md border border-teal-500/30">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-teal-400/20 text-teal-300 border border-teal-400/30">
+                NEW MODULE
+              </span>
+              <span className="text-xs text-slate-300">Enterprise Learning &amp; Compliance Platform (ELMS)</span>
+            </div>
+            <h2 className="text-base font-bold text-white mt-1">
+              Statutory Workforce Training &amp; Recertification Engine
+            </h2>
+            <p className="text-xs text-slate-300 mt-0.5 max-w-2xl leading-relaxed">
+              Automated onboarding paths, 365-day SOC 2 &amp; ISO 27001 recertification tracking, team compliance heatmaps, and tamper-evident digital certificate verification.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <Link
+              href="/lms"
+              className="px-3.5 py-2 bg-hgv-teal hover:bg-teal-600 text-white rounded-xl text-xs font-bold shadow-xs transition flex items-center gap-1.5"
+            >
+              <GraduationCap className="w-3.5 h-3.5" />
+              <span>Learner Portal</span>
+            </Link>
+
+            <Link
+              href="/lms/manager"
+              className="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold shadow-xs transition flex items-center gap-1.5"
+            >
+              <Flame className="w-3.5 h-3.5" />
+              <span>Manager Heatmap</span>
+            </Link>
+
+            <Link
+              href="/lms/analytics"
+              className="px-3.5 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-semibold transition flex items-center gap-1.5 border border-white/15"
+            >
+              <Award className="w-3.5 h-3.5 text-teal-300" />
+              <span>Scorecard</span>
+            </Link>
+          </div>
         </div>
       </div>
 

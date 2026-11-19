@@ -50,7 +50,7 @@ export function TopNavbar() {
     }
   };
 
-  const handleRoleSelect = async (roleCode: "HR_MANAGER" | "HR_TEAM_MEMBER" | "GCC_LEAD") => {
+  const handleRoleSelect = async (roleCode: "HR_MANAGER" | "HR_TEAM_MEMBER" | "GCC_LEAD" | "AUDITOR") => {
     setRoleMenuOpen(false);
     await switchRole(roleCode);
     router.refresh();
@@ -65,7 +65,7 @@ export function TopNavbar() {
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search employees, roles, departments..."
+          placeholder="Search employees, roles, courses..."
           className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-4 py-1.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-hgv-teal/40 focus:border-hgv-teal transition"
         />
       </form>
@@ -88,7 +88,7 @@ export function TopNavbar() {
             <div className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-slate-100 py-2 z-50">
               <div className="px-4 py-2 border-b border-slate-100">
                 <p className="text-xs font-semibold text-slate-800">Switch Active Persona</p>
-                <p className="text-[11px] text-slate-500">Test platform capabilities across all 3 roles</p>
+                <p className="text-[11px] text-slate-500">Test platform capabilities across 3-tier RBAC & Auditor</p>
               </div>
 
               <button
@@ -104,30 +104,10 @@ export function TopNavbar() {
                   <div className="flex items-center gap-1.5">
                     <span className="text-xs font-semibold text-slate-800">Sarah Jenkins</span>
                     <span className="px-1.5 py-0.2 bg-hgv-navy text-white text-[9px] font-semibold rounded">
-                      HR Manager
+                      Super Admin
                     </span>
                   </div>
-                  <p className="text-[11px] text-slate-500">Full access: master data, config, admin, audit</p>
-                </div>
-              </button>
-
-              <button
-                onClick={() => handleRoleSelect("HR_TEAM_MEMBER")}
-                className={`w-full text-left px-4 py-2.5 flex items-start gap-3 hover:bg-slate-50 transition ${
-                  user?.roleCode === "HR_TEAM_MEMBER" ? "bg-hgv-sky/20" : ""
-                }`}
-              >
-                <div className="w-7 h-7 rounded-full bg-hgv-teal text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
-                  AR
-                </div>
-                <div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-semibold text-slate-800">Alex Rivera</span>
-                    <span className="px-1.5 py-0.2 bg-hgv-teal text-white text-[9px] font-semibold rounded">
-                      Team Member
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-slate-500">Master data, compensation, CSV uploads, reports</p>
+                  <p className="text-[11px] text-slate-500">L&D Admin: course CMS, compliance rules, global export</p>
                 </div>
               </button>
 
@@ -144,10 +124,50 @@ export function TopNavbar() {
                   <div className="flex items-center gap-1.5">
                     <span className="text-xs font-semibold text-slate-800">Jeff Chu</span>
                     <span className="px-1.5 py-0.2 bg-amber-600 text-white text-[9px] font-semibold rounded">
-                      GCC Lead
+                      People Manager
                     </span>
                   </div>
-                  <p className="text-[11px] text-slate-500">Read-only master data, billing figures, exports</p>
+                  <p className="text-[11px] text-slate-500">Team compliance heatmap, 1-click nudges, direct reports</p>
+                </div>
+              </button>
+
+              <button
+                onClick={() => handleRoleSelect("HR_TEAM_MEMBER")}
+                className={`w-full text-left px-4 py-2.5 flex items-start gap-3 hover:bg-slate-50 transition ${
+                  user?.roleCode === "HR_TEAM_MEMBER" ? "bg-hgv-sky/20" : ""
+                }`}
+              >
+                <div className="w-7 h-7 rounded-full bg-hgv-teal text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+                  AR
+                </div>
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-semibold text-slate-800">Alex Rivera</span>
+                    <span className="px-1.5 py-0.2 bg-hgv-teal text-white text-[9px] font-semibold rounded">
+                      Learner
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-500">Learner portal, player, quizzes, verifiable certificate wallet</p>
+                </div>
+              </button>
+
+              <button
+                onClick={() => handleRoleSelect("AUDITOR")}
+                className={`w-full text-left px-4 py-2.5 flex items-start gap-3 hover:bg-slate-50 transition ${
+                  user?.roleCode === "AUDITOR" ? "bg-hgv-sky/20" : ""
+                }`}
+              >
+                <div className="w-7 h-7 rounded-full bg-purple-700 text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+                  MV
+                </div>
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-semibold text-slate-800">Marcus Vance</span>
+                    <span className="px-1.5 py-0.2 bg-purple-700 text-white text-[9px] font-semibold rounded">
+                      Auditor
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-500">Immutable audit trails, SOC2/ISO evidence export, verify</p>
                 </div>
               </button>
             </div>
@@ -168,22 +188,29 @@ export function TopNavbar() {
           {notifMenuOpen && (
             <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-slate-100 py-2 z-50">
               <div className="px-4 py-2 border-b border-slate-100 flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-800">Operational Notifications</span>
+                <span className="text-xs font-semibold text-slate-800">Compliance & System Alerts</span>
                 <span className="text-[10px] text-hgv-teal font-medium cursor-pointer">Mark all as read</span>
               </div>
-              <div className="divide-y divide-slate-100 max-h-64 overflow-y-auto">
+              <div className="divide-y divide-slate-100 max-h-72 overflow-y-auto">
                 <div className="px-4 py-2.5 hover:bg-slate-50 transition flex items-start gap-2.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                  <AlertTriangle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-xs text-slate-700 font-medium leading-tight">Master data synchronized</p>
-                    <p className="text-[10px] text-slate-400 mt-0.5">Initial reference values & sample workforce loaded</p>
+                    <p className="text-xs text-slate-700 font-medium leading-tight">LMS: Workplace Safety Overdue</p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">Manager Nudge dispatched via Email & Slack</p>
                   </div>
                 </div>
                 <div className="px-4 py-2.5 hover:bg-slate-50 transition flex items-start gap-2.5">
-                  <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-xs text-slate-700 font-medium leading-tight">PMO Shift Override applied</p>
-                    <p className="text-[10px] text-slate-400 mt-0.5">Radha Subramanian (2026-08) set to $240.00 USD</p>
+                    <p className="text-xs text-slate-700 font-medium leading-tight">POSH Certificate Issued</p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">Digital Certificate verified (Hash SHA-256 generated)</p>
+                  </div>
+                </div>
+                <div className="px-4 py-2.5 hover:bg-slate-50 transition flex items-start gap-2.5">
+                  <CheckCircle2 className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-xs text-slate-700 font-medium leading-tight">Annual Recertification Cadence Active</p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">SOC 2 / ISO 27001 tracking active across 108 staff</p>
                   </div>
                 </div>
               </div>

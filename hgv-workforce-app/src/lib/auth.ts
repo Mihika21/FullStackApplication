@@ -1,7 +1,7 @@
 import { prisma } from "./prisma";
 import { cookies, headers } from "next/headers";
 
-export type RoleCode = "HR_MANAGER" | "HR_TEAM_MEMBER" | "GCC_LEAD";
+export type RoleCode = "HR_MANAGER" | "HR_TEAM_MEMBER" | "GCC_LEAD" | "AUDITOR";
 
 export interface CurrentUser {
   id: string;
@@ -18,11 +18,18 @@ export function getRolePermissions(roleCode: RoleCode) {
     canEditWorkforce: roleCode === "HR_MANAGER" || roleCode === "HR_TEAM_MEMBER",
     canEditCompensation: roleCode === "HR_MANAGER" || roleCode === "HR_TEAM_MEMBER",
     canUploadCsv: roleCode === "HR_MANAGER" || roleCode === "HR_TEAM_MEMBER",
-    canViewBilling: true,
+    canViewBilling: roleCode !== "AUDITOR",
     canEditBillingConfig: roleCode === "HR_MANAGER",
     canManageUsers: roleCode === "HR_MANAGER",
-    canViewAudit: roleCode === "HR_MANAGER",
+    canViewAudit: roleCode === "HR_MANAGER" || roleCode === "AUDITOR",
     canExportReports: true,
+    // LMS Specific
+    canAuthorCourses: roleCode === "HR_MANAGER",
+    canManageTeamLms: roleCode === "HR_MANAGER" || roleCode === "GCC_LEAD",
+    canAccessLearnerPortal: true,
+    canViewExecutiveScorecard: roleCode === "HR_MANAGER" || roleCode === "AUDITOR" || roleCode === "GCC_LEAD",
+    canExportAuditPackage: roleCode === "HR_MANAGER" || roleCode === "AUDITOR",
+    isAuditor: roleCode === "AUDITOR",
   };
 }
 
